@@ -1,8 +1,9 @@
-# Laboratório 01 — Classificador de Distância Mínima (base Iris)
+# Laboratório 01 — Classificador de Distância Mínima
 
-Implementação, sem bibliotecas de aprendizado de máquina, de um sistema de reconhecimento supervisionado de padrões baseado em decisão teórica, aplicado à base Iris.
+Implementação, sem bibliotecas de aprendizado de máquina, de um sistema de reconhecimento supervisionado de padrões baseado em decisão teórica, aplicado a base de dados Iris.
 
 Disciplina: Tópicos Especiais em Inteligência Artificial — UEPB
+
 Prof. Robson Pequeno de Sousa
 
 ## O que o código faz
