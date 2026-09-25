@@ -9,11 +9,10 @@ Prof. Robson Pequeno de Sousa
 ## O que o código faz
 
 - Divide a base em 70% treino / 30% teste, estratificado por classe (35/15 amostras por espécie).
-- Usa em todos os sistemas apenas a 3ª e a 4ª colunas da base: `Petal length` (x1) e `Petal width` (x2).
 - Calcula o vetor protótipo (média) de cada classe no conjunto de treino.
-- **(i)** Classificador de distância mínima (distância euclidiana), para as três classes.
-- **(ii)** Classificador pelo máximo das funções de decisão `d_j(x) = xᵗm_j − ½m_jᵗm_j`, para as três classes.
-- **(iii)** Superfícies de decisão `d_ij(x) = (m_i − m_j)ᵗx − ½(m_i − m_j)ᵗ(m_i + m_j) = 0` para os pares setosa × versicolor, setosa × virginica e versicolor × virginica, que no plano da pétala são retas.
+- **(i)** Classificador de distância mínima (distância euclidiana), com os 4 atributos.
+- **(ii)** Classificador pelo máximo das funções de decisão `d_j(x) = xᵗm_j − ½m_jᵗm_j`, com os 4 atributos.
+- **(iii)** Superfícies de decisão `d_ij(x) = (m_i − m_j)ᵗx − ½(m_i − m_j)ᵗ(m_i + m_j) = 0` para os pares setosa × versicolor, setosa × virginica e versicolor × virginica: hiperplanos com 4 atributos e retas com os 2 primeiros atributos.
 - Gera diagramas de dispersão (variabilidade, retas sobre o teste e retas sobre a base completa) em `figuras/`.
 
 ## Como executar
@@ -36,13 +35,13 @@ python lab01/main.py
 
 | Modelo | Acurácia no teste |
 |---|---|
-| Distância mínima | 93,33% |
-| Máximo da função de decisão | 93,33% |
+| Distância mínima (4 atributos) | 91,11% |
+| Máximo da função de decisão (4 atributos) | 91,11% |
 
 Os dois classificadores produzem predições idênticas, como previsto pela teoria.
 
-| Reta de decisão | Teste | Base completa |
+| Reta de decisão (2 primeiros atributos) | Teste | Base completa |
 |---|---|---|
-| setosa × versicolor | 100% | 100% |
-| setosa × virginica | 100% | 100% |
-| versicolor × virginica | 90% | 94% |
+| setosa × versicolor | 93,33% | 98% |
+| setosa × virginica | 96,67% | 98% |
+| versicolor × virginica | 66,67% | 72% |

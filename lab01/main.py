@@ -35,31 +35,32 @@ def matriz_confusao(y_real, y_pred, classes):
 def main():
     # 1. Carregamento dos dados
     df = pd.read_excel(os.path.join(PASTA, "Iris data.xls"))
-    atributos = df.columns[2:4].tolist() # 3ª e 4ª colunas (Petal length, Petal width)
-    classes = df[TARGET].unique()        # setosa, versicolor, virginica
+    atributos_4d = df.columns[:4].tolist() # 4 atributos definidos no dataset
+    atributos_2d = df.columns[:2].tolist() # 2 primeiros atributos (Sepal length, Sepal width)
+    classes = df[TARGET].unique()          # setosa, versicolor, virginica
 
     # 2. Divisão da amostra (70% Treinamento / 30% Teste)
     train_data, test_data = dividir_amostra(df, classes)
-    X_test, y_test = test_data[atributos].values, test_data[TARGET].values
+    X_test_4d, y_test = test_data[atributos_4d].values, test_data[TARGET].values
 
-    print(f"Atributos utilizados: {atributos}")
     print(f"Treinamento: {len(train_data)} amostras | Teste: {len(test_data)} amostras")
     print("Amostras de teste por classe:", test_data[TARGET].value_counts().to_dict())
 
     # 3. Protótipos (vetor média) de cada classe, estimados no conjunto de treino
-    prototipos = distancia_minima.calcular_prototipos(train_data, atributos, TARGET, classes)
+    means_4d = distancia_minima.calcular_prototipos(train_data, atributos_4d, TARGET, classes)
+    means_2d = distancia_minima.calcular_prototipos(train_data, atributos_2d, TARGET, classes)
 
-    print("\nVetores protótipos:")
+    print("\nVetores protótipos (4 atributos):")
     for c in classes:
-        print(f"  m({c}) = {np.round(prototipos[c], 3)}")
+        print(f"  m({c}) = {np.round(means_4d[c], 3)}")
 
-    print("\nFunções de decisão:")
+    print("\nFunções de decisão (4 atributos):")
     for c in classes:
-        print(f"  d_{c}(x) = {funcao_decisao.formatar(prototipos[c])}")
+        print(f"  d_{c}(x) = {funcao_decisao.formatar(means_4d[c])}")
 
-    # 4. Avaliação no conjunto de teste: (i) e (ii)
-    pred_dist_min = distancia_minima.classificar(X_test, prototipos)
-    pred_max_dec = funcao_decisao.classificar(X_test, prototipos)
+    # 4. Avaliação no conjunto de teste (i) e (ii) com 4 atributos
+    pred_dist_min = distancia_minima.classificar(X_test_4d, means_4d)
+    pred_max_dec = funcao_decisao.classificar(X_test_4d, means_4d)
 
     acc_dist_min = np.mean(np.array(pred_dist_min) == y_test)
     acc_max_dec = np.mean(np.array(pred_max_dec) == y_test)
@@ -71,14 +72,21 @@ def main():
     print("\nMatriz de confusão (linhas = classe real, colunas = classe predita):")
     print(matriz_confusao(y_test, pred_dist_min, classes))
 
-    # 5. (iii) Superfícies de decisão (retas) e regra d_ij(x)
-    print("\nSuperfícies de decisão (retas) e regra d_ij(x):")
+    # 5. (iii) Superfícies de decisão
+    print("\nSuperfícies de decisão (4 atributos - hiperplanos):")
     for c1, c2 in PARES:
-        w, w0 = superficie_decisao.coef_superficie(prototipos[c1], prototipos[c2])
+        w, w0 = superficie_decisao.coef_superficie(means_4d[c1], means_4d[c2])
+        print(f"  {c1} x {c2}: {w[0]:.2f}*x1 + {w[1]:.2f}*x2 + {w[2]:.2f}*x3 + {w[3]:.2f}*x4 + {w0:.2f} = 0")
+
+    # Com os atributos da sépala, versicolor e virginica se sobrepõem bastante,
+    # por isso a reta desse par tende a errar mais que as retas que envolvem setosa.
+    print("\nSuperfícies de decisão (2 primeiros atributos - retas) e regra d_ij(x):")
+    for c1, c2 in PARES:
+        w, w0 = superficie_decisao.coef_superficie(means_2d[c1], means_2d[c2])
         print(f"  {c1} x {c2}: d_ij(x) = {w[0]:.2f}*x1 + {w[1]:.2f}*x2 + {w0:.2f} = 0")
         for nome, dados in [('teste', test_data), ('dataset completo', df)]:
             sub = dados[dados[TARGET].isin([c1, c2])]
-            pred = superficie_decisao.classifica_par(sub[atributos].values, w, w0, c1, c2)
+            pred = superficie_decisao.classifica_par(sub[atributos_2d].values, w, w0, c1, c2)
             acertos = np.sum(pred == sub[TARGET].values)
             print(f"    Acurácia ({nome}): {acertos}/{len(sub)} = {acertos / len(sub) * 100:.2f}%")
 
@@ -95,16 +103,16 @@ def main():
         df_pair_test = test_data[test_data[TARGET].isin([c1, c2])]
 
         # Plot 1: Variabilidade da nuvem (Sem reta)
-        superficie_decisao.dispersao(df_pair_full, ax_var[i], c1, c2, atributos, TARGET)
+        superficie_decisao.dispersao(df_pair_full, ax_var[i], c1, c2, atributos_2d, TARGET)
         ax_var[i].set_title(f'Variabilidade: {c1} X {c2}')
         ax_var[i].legend()
 
-        # Plot 2: Apenas Amostras de Teste + Superfície de decisão
-        superficie_decisao.plot_reta(df_pair_test, ax_test[i], c1, c2, prototipos,
-                                     atributos, TARGET, f'Teste: {c1} X {c2}')
-        # Plot 3: Dataset Completo + Superfície de decisão
-        superficie_decisao.plot_reta(df_pair_full, ax_full[i], c1, c2, prototipos,
-                                     atributos, TARGET, f'Dataset Completo: {c1} X {c2}')
+        # Plot 2: Apenas Amostras de Teste + Superfície 2D
+        superficie_decisao.plot_reta(df_pair_test, ax_test[i], c1, c2, means_2d,
+                                     atributos_2d, TARGET, f'Teste: {c1} X {c2}')
+        # Plot 3: Dataset Completo + Superfície 2D
+        superficie_decisao.plot_reta(df_pair_full, ax_full[i], c1, c2, means_2d,
+                                     atributos_2d, TARGET, f'Dataset Completo: {c1} X {c2}')
 
     for fig, nome in [(fig_var, 'variabilidade'), (fig_test, 'superficie_teste'), (fig_full, 'superficie_completo')]:
         fig.tight_layout()
