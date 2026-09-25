@@ -75,7 +75,7 @@
 % Resumo (página 2)
 %=====================================================================
 \begin{abstract}
-Este relatório descreve a implementação, em Python e sem o uso de bibliotecas de aprendizado de máquina, de um sistema de reconhecimento supervisionado de padrões para a base de dados Iris, fundamentado na abordagem de reconhecimento por decisão teórica. Foram implementados (i) o classificador de distância mínima, (ii) o classificador pelo máximo das funções de decisão e (iii) as superfícies de decisão entre pares de classes. Os modelos com quatro atributos obtiveram 91,11\% de acurácia no conjunto de teste, com predições idênticas nos dois classificadores, o que confirma empiricamente a equivalência teórica entre eles. As retas de decisão construídas com os dois primeiros atributos (sépala) separam bem a classe \emph{setosa} das demais, mas apresentam desempenho limitado no par \emph{versicolor}~$\times$~\emph{virginica}, devido à sobreposição das nuvens de dados nesse subespaço.
+Este relatório descreve a implementação, em Python e sem o uso de bibliotecas de aprendizado de máquina, de um sistema de reconhecimento supervisionado de padrões para a base de dados Iris, fundamentado na abordagem de reconhecimento por decisão teórica. Foram implementados (i) o classificador de distância mínima, (ii) o classificador pelo máximo das funções de decisão e (iii) as superfícies de decisão entre pares de classes. Todos os sistemas utilizam o terceiro e o quarto atributos da base, comprimento e largura da pétala. Os dois classificadores obtiveram 93,33\% de acurácia no conjunto de teste, com predições idênticas, o que confirma empiricamente a equivalência teórica entre eles. As retas de decisão separam perfeitamente a classe \emph{setosa} das demais e atingem 94\% de acerto no par \emph{versicolor}~$\times$~\emph{virginica}, cujas nuvens de dados se tocam apenas numa pequena região de fronteira.
 
 \vspace{1em}
 \noindent\textbf{Palavras-chave:} reconhecimento de padrões; classificador de distância mínima; funções de decisão; superfície de decisão; base Iris.
@@ -106,6 +106,8 @@ O objetivo do trabalho é aplicar esses conceitos à base Iris, cumprindo os seg
   \item (iii) definir a superfície de decisão (reta) com os dois primeiros atributos para os três cenários e visualizá-la sobre o conjunto de teste e sobre toda a amostra;
   \item não utilizar bibliotecas de aprendizado de máquina.
 \end{enumerate}
+
+Neste trabalho, todos os sistemas (classificadores, superfícies de decisão e diagramas de dispersão) foram construídos com o \emph{terceiro e o quarto atributos} da base, isto é, comprimento e largura da pétala. A escolha permite que um único vetor de características bidimensional seja usado de forma consistente nos três métodos, de modo que as retas visualizadas nos gráficos sejam exatamente as fronteiras dos classificadores avaliados. Além disso, essas são as dimensões em que as espécies se diferenciam com mais clareza, conforme discutido na Seção~\ref{sec:discussao}.
 
 %=====================================================================
 \section{Fundamentação teórica}\label{sec:teoria}
@@ -175,92 +177,138 @@ pois $(\mathbf{m}_i - \mathbf{m}_j)^t(\mathbf{m}_i + \mathbf{m}_j) = \mathbf{m}_
 
 \subsection{Exemplo ilustrativo}
 
-Um exemplo clássico do método é a separação entre \emph{Iris versicolor} ($\omega_1$) e \emph{Iris setosa} ($\omega_2$) usando comprimento e largura da pétala, com protótipos $\mathbf{m}_1 = (4{,}3;\ 1{,}3)^t$ e $\mathbf{m}_2 = (1{,}5;\ 0{,}3)^t$. A superfície resultante é $d_{12}(\mathbf{x}) = 2{,}8x_1 + 1{,}0x_2 - 8{,}9 = 0$, com a regra: $\mathbf{x} \in \omega_1$ se $d_{12}(\mathbf{x}) > 0$ e $\mathbf{x} \in \omega_2$ se $d_{12}(\mathbf{x}) < 0$. Pode-se conferir pela Eq.~\eqref{eq:coef}: $\mathbf{w} = (2{,}8;\ 1{,}0)^t$ e $w_0 = -\tfrac{1}{2}(20{,}18 - 2{,}34) = -8{,}92$. Este laboratório reproduz o mesmo procedimento, mas com os dois primeiros atributos da base (dimensões da \emph{sépala}), conforme exigido pelo enunciado, e o estende aos três pares de classes.
+Um exemplo clássico do método é a separação entre \emph{Iris versicolor} ($\omega_1$) e \emph{Iris setosa} ($\omega_2$) usando comprimento e largura da pétala, com protótipos $\mathbf{m}_1 = (4{,}3;\ 1{,}3)^t$ e $\mathbf{m}_2 = (1{,}5;\ 0{,}3)^t$. A superfície resultante é $d_{12}(\mathbf{x}) = 2{,}8x_1 + 1{,}0x_2 - 8{,}9 = 0$, com a regra: $\mathbf{x} \in \omega_1$ se $d_{12}(\mathbf{x}) > 0$ e $\mathbf{x} \in \omega_2$ se $d_{12}(\mathbf{x}) < 0$. Pode-se conferir pela Eq.~\eqref{eq:coef}: $\mathbf{w} = (2{,}8;\ 1{,}0)^t$ e $w_0 = -\tfrac{1}{2}(20{,}18 - 2{,}34) = -8{,}92$. Este laboratório reproduz o mesmo procedimento, com os mesmos atributos, e o estende às três classes e aos três pares de classes.
 
 %=====================================================================
 \section{Base de dados}
 %=====================================================================
 
-A base Iris (arquivo \texttt{Iris data.xls}) contém 150 amostras, 50 de cada espécie: \emph{setosa}, \emph{versicolor} e \emph{virginica}. Cada amostra é descrita por quatro atributos, que formam o vetor de características $\mathbf{x} = [x_1, x_2, x_3, x_4]^t$. A ordem das colunas no arquivo, e portanto a adotada neste trabalho, é:
+A base Iris (arquivo \texttt{Iris data.xls}) contém 150 amostras, 50 de cada espécie: \emph{setosa}, \emph{versicolor} e \emph{virginica}. Cada amostra é descrita por quatro atributos, dispostos no arquivo na seguinte ordem:
 
 \begin{table}[H]
 \centering
 \caption{Atributos da base Iris na ordem do arquivo.}
 \begin{tabular}{cll}
 \toprule
-Atributo & Coluna & Descrição \\
+Coluna & Nome & Descrição \\
 \midrule
-$x_1$ & \texttt{Sepal length} & comprimento da sépala (cm) \\
-$x_2$ & \texttt{Sepal width}  & largura da sépala (cm) \\
-$x_3$ & \texttt{Petal length} & comprimento da pétala (cm) \\
-$x_4$ & \texttt{Petal width}  & largura da pétala (cm) \\
+1ª & \texttt{Sepal length} & comprimento da sépala (cm) \\
+2ª & \texttt{Sepal width}  & largura da sépala (cm) \\
+3ª & \texttt{Petal length} & comprimento da pétala (cm) \\
+4ª & \texttt{Petal width}  & largura da pétala (cm) \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Assim, os ``dois primeiros atributos'' pedidos no enunciado correspondem, aqui, às dimensões da sépala, e não às da pétala usadas no exemplo ilustrativo.
+O vetor de características adotado em todos os sistemas é formado pela 3ª e pela 4ª colunas:
+\begin{equation}
+  \mathbf{x} = [x_1,\ x_2]^t, \qquad x_1 = \text{comprimento da pétala}, \quad x_2 = \text{largura da pétala},
+  \label{eq:vetor}
+\end{equation}
+a mesma definição usada no exemplo ilustrativo. Os protótipos, as funções de decisão e as superfícies são, portanto, todos bidimensionais.
 
 %=====================================================================
 \section{Metodologia e implementação}
 %=====================================================================
 
-O código foi escrito em Python~3.12 usando apenas \texttt{pandas} (leitura da planilha e manipulação tabular), \texttt{numpy} (álgebra vetorial) e \texttt{matplotlib} (gráficos). Nenhuma biblioteca de aprendizado de máquina foi utilizada: médias, distâncias, funções de decisão, superfícies, divisão da amostra, matriz de confusão e acurácia foram implementadas manualmente. O código-fonte completo, a base de dados e as figuras geradas estão disponíveis no repositório \repositorio. Os trechos apresentados a seguir mantêm a numeração de linhas do arquivo \texttt{lab01.py}.
+O código foi escrito em Python~3.12 usando apenas \texttt{pandas} (leitura da planilha e manipulação tabular), \texttt{numpy} (álgebra vetorial) e \texttt{matplotlib} (gráficos). Nenhuma biblioteca de aprendizado de máquina foi utilizada: médias, distâncias, funções de decisão, superfícies, divisão da amostra, matriz de confusão e acurácia foram implementadas manualmente. O código-fonte completo, a base de dados e as figuras geradas estão disponíveis no repositório \repositorio.
+
+\subsection{Organização do código}
+
+O código foi dividido em quatro módulos, um para cada método de classificação e um programa principal que os integra (Tabela~\ref{tab:modulos}). Essa separação espelha a estrutura teórica da Seção~\ref{sec:teoria}: cada arquivo concentra as equações de um único método, e o programa principal apenas prepara os dados, chama os métodos e apresenta os resultados. Os trechos reproduzidos a seguir mantêm a numeração de linhas de seus respectivos arquivos.
+
+\begin{table}[H]
+\centering
+\caption{Módulos da implementação.}
+\label{tab:modulos}
+\begin{tabular}{lp{9.5cm}}
+\toprule
+Arquivo & Responsabilidade \\
+\midrule
+\texttt{distancia\_minima.py}   & (i) protótipos, distância euclidiana e classificação pela menor distância \\
+\texttt{funcao\_decisao.py}     & (ii) funções de decisão $d_j(\mathbf{x})$ e classificação pelo maior valor \\
+\texttt{superficie\_decisao.py} & (iii) coeficientes de $d_{ij}(\mathbf{x})$, regra de sinal e gráficos de dispersão com a reta \\
+\texttt{main.py}                & leitura da base, divisão 70/30, avaliação, matriz de confusão e geração das figuras \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \subsection{Divisão 70\% / 30\% estratificada}
 
-Como o classificador é supervisionado, os protótipos precisam ser estimados apenas com dados de treinamento, e o desempenho deve ser medido em amostras não vistas. A divisão foi feita \emph{por classe}: as 50 amostras de cada espécie são embaralhadas e separadas em 35 para treino e 15 para teste, totalizando 105 e 45 amostras. A estratificação preserva a proporção de 1/3 por classe nos dois conjuntos. Uma versão preliminar que embaralhava a base inteira produziu um teste desbalanceado (10 \emph{setosa}, 17 \emph{versicolor}, 18 \emph{virginica}), o que motivou a correção. A semente aleatória é fixada (\texttt{np.random.seed(42)}) para reprodutibilidade.
+Como o classificador é supervisionado, os protótipos precisam ser estimados apenas com dados de treinamento, e o desempenho deve ser medido em amostras não vistas. A divisão foi feita \emph{por classe}: as 50 amostras de cada espécie são embaralhadas e separadas em 35 para treino e 15 para teste, totalizando 105 e 45 amostras. A estratificação preserva a proporção de 1/3 por classe nos dois conjuntos. Uma versão preliminar que embaralhava a base inteira produziu um teste desbalanceado (10 \emph{setosa}, 17 \emph{versicolor}, 18 \emph{virginica}), o que motivou a correção. A semente aleatória é fixada em 42 para reprodutibilidade.
 
-\begin{lstlisting}[firstnumber=16]
-np.random.seed(42)
-train_idx, test_idx = [], []
-for c in classes:
-    idx_c = np.random.permutation(np.where(df[target] == c)[0])
-    n_train = int(round(0.7 * len(idx_c)))
-    train_idx.extend(idx_c[:n_train])
-    test_idx.extend(idx_c[n_train:])
+\begin{lstlisting}[firstnumber=15,title=\texttt{main.py}]
+def dividir_amostra(df, classes, frac_treino=0.7, semente=42):
+    """Divisão estratificada: 70% treino / 30% teste dentro de cada classe
+    (35 / 15), preservando a proporção de 1/3 por classe nos dois conjuntos."""
+    np.random.seed(semente)
+    train_idx, test_idx = [], []
+    for c in classes:
+        idx_c = np.random.permutation(np.where(df[TARGET] == c)[0])
+        n_train = int(round(frac_treino * len(idx_c)))
+        train_idx.extend(idx_c[:n_train])
+        test_idx.extend(idx_c[n_train:])
+    return df.iloc[train_idx], df.iloc[test_idx]
 \end{lstlisting}
 
-\subsection{Vetores protótipos}
+\subsection{Vetores protótipos e (i) classificador de distância mínima}
 
-Os protótipos são as médias por classe do conjunto de treino, exatamente como na Eq.~\eqref{eq:prototipo}. São calculados dois conjuntos: \texttt{means\_4d}, com os quatro atributos, usado nos classificadores (i) e (ii); e \texttt{means\_2d}, com os dois primeiros, usado nas retas do item (iii).
+Os protótipos são as médias por classe do conjunto de treino, exatamente como na Eq.~\eqref{eq:prototipo}. O programa principal seleciona uma única vez os atributos (\texttt{atributos = df.columns[2:4]}) e calcula um único conjunto de protótipos, compartilhado pelos classificadores (i) e (ii) e pelas superfícies do item (iii). A função \texttt{dist\_euclidiana} implementa a Eq.~\eqref{eq:distancia}, e \texttt{classificar} atribui cada amostra à classe de menor distância:
 
-\begin{lstlisting}[firstnumber=32]
-means_4d = {c: train_data[train_data[target] == c][atributos_4d].mean().values for c in classes}
-means_2d = {c: train_data[train_data[target] == c][atributos_2d].mean().values for c in classes}
-\end{lstlisting}
+\begin{lstlisting}[firstnumber=9,title=\texttt{distancia\_minima.py}]
+def calcular_prototipos(dados, atributos, target, classes):
+    """Vetor protótipo de cada classe: m_j = (1/N_j) * soma(x), x pertencente a w_j."""
+    return {c: dados[dados[target] == c][atributos].mean().values for c in classes}
 
-\subsection{(i) Classificador de distância mínima}
 
-A função \texttt{dist\_euclidiana} implementa a Eq.~\eqref{eq:distancia}. Para cada amostra de teste calcula-se a distância aos três protótipos e escolhe-se a classe de menor distância:
-
-\begin{lstlisting}[firstnumber=41]
 def dist_euclidiana(x, m):
+    """D(x, m_j) = sqrt((x - m_j)^t (x - m_j))"""
     return np.sqrt(np.sum((x - m)**2))
+
+
+def classificar(X, prototipos):
+    """Atribui cada amostra de X à classe de menor distância ao protótipo."""
+    pred = []
+    for x in X:
+        distancias = {c: dist_euclidiana(x, m) for c, m in prototipos.items()}
+        pred.append(min(distancias, key=distancias.get))
+    return pred
 \end{lstlisting}
 
 \subsection{(ii) Classificador pelo máximo das funções de decisão}
 
-A função \texttt{func\_decisao} implementa a Eq.~\eqref{eq:decisao}, e a classe atribuída é a de maior $d_j(\mathbf{x})$, segundo a regra da Eq.~\eqref{eq:regra}. O programa também imprime cada função de decisão de forma explícita, com os coeficientes numéricos, para que o modelo possa ser inspecionado:
+A função \texttt{func\_decisao} implementa a Eq.~\eqref{eq:decisao}, e \texttt{classificar} atribui a classe de maior $d_j(\mathbf{x})$, segundo a regra da Eq.~\eqref{eq:regra}. Os dois módulos expõem a mesma interface, \texttt{classificar(X, prototipos)}, o que torna explícito que (i) e (ii) recebem exatamente as mesmas informações e diferem apenas no critério de decisão. O módulo inclui ainda a função \texttt{formatar}, usada pelo programa principal para imprimir cada função de decisão com seus coeficientes numéricos:
 
-\begin{lstlisting}[firstnumber=49]
+\begin{lstlisting}[firstnumber=12,title=\texttt{funcao\_decisao.py}]
 def func_decisao(x, m):
     return np.dot(x, m) - 0.5 * np.dot(m, m)
+
+
+def classificar(X, prototipos):
+    """Atribui cada amostra de X à classe com maior valor numérico de d_j(x)."""
+    pred = []
+    for x in X:
+        decisoes = {c: func_decisao(x, m) for c, m in prototipos.items()}
+        pred.append(max(decisoes, key=decisoes.get))
+    return pred
 \end{lstlisting}
 
-O laço de avaliação aplica os dois classificadores a cada amostra de teste. Além da acurácia, o programa verifica se as listas de predições coincidem e monta uma matriz de confusão implementada manualmente.
+O programa principal aplica os dois classificadores ao conjunto de teste. Além da acurácia, verifica se as listas de predições coincidem e monta uma matriz de confusão implementada manualmente.
 
 \subsection{(iii) Superfícies de decisão}
 
-A função \texttt{coef\_superficie} retorna $\mathbf{w}$ e $w_0$ conforme a Eq.~\eqref{eq:coef}, equivalente à Eq.~\eqref{eq:superficie}. A mesma função atende ao caso 4D (hiperplanos) e ao caso 2D (retas). A função \texttt{classifica\_par} aplica a regra de sinal associada à Eq.~\eqref{eq:fronteira}, ou seja, $d_{ij}(\mathbf{x}) > 0 \Rightarrow \omega_i$ e $d_{ij}(\mathbf{x}) < 0 \Rightarrow \omega_j$, o que permite medir quantas amostras cada reta separa corretamente:
+A função \texttt{coef\_superficie} retorna $\mathbf{w}$ e $w_0$ conforme a Eq.~\eqref{eq:coef}, equivalente à Eq.~\eqref{eq:superficie}. Como o vetor de características é bidimensional, cada superfície é uma reta no plano $(x_1, x_2)$.A função \texttt{classifica\_par} aplica a regra de sinal associada à Eq.~\eqref{eq:fronteira}, ou seja, $d_{ij}(\mathbf{x}) > 0 \Rightarrow \omega_i$ e $d_{ij}(\mathbf{x}) < 0 \Rightarrow \omega_j$, o que permite medir quantas amostras cada reta separa corretamente:
 
-\begin{lstlisting}[firstnumber=85]
+\begin{lstlisting}[firstnumber=11,title=\texttt{superficie\_decisao.py}]
 def coef_superficie(mi, mj):
+    """Coeficientes de d_ij(x) = w^t x + w0."""
     w = mi - mj
     w0 = -0.5 * (np.dot(mi, mi) - np.dot(mj, mj))
     return w, w0
 
-# Regra de decisão: d_ij(x) > 0 -> w_i ; d_ij(x) < 0 -> w_j
+
 def classifica_par(X, w, w0, ci, cj):
+    """Regra de decisão: d_ij(x) > 0 -> w_i ; d_ij(x) < 0 -> w_j"""
     return np.where(X @ w + w0 > 0, ci, cj)
 \end{lstlisting}
 
@@ -272,7 +320,7 @@ Foram geradas três figuras, cada uma com os três cenários pedidos:
   \item \textbf{Teste}: apenas as amostras de teste do par, com a reta de decisão;
   \item \textbf{Dataset completo}: todas as amostras do par, com a mesma reta.
 \end{itemize}
-Nas figuras com reta, a função \texttt{plot\_reta} também marca os protótipos $\mathbf{m}_i$ e $\mathbf{m}_j$ (símbolo $\times$) e o segmento que os liga, evidenciando a construção geométrica da superfície de decisão. Os eixos usam a mesma escala (\texttt{set\_aspect('equal')}), para que a perpendicularidade entre a reta e o segmento $\overline{\mathbf{m}_i\mathbf{m}_j}$, prevista pela Eq.~\eqref{eq:superficie}, fique visível. Os limites dos eixos são fixados antes de desenhar a reta, de modo que ela não expanda a escala e ``achate'' a nuvem de pontos.
+Nas figuras com reta, a função \texttt{plot\_reta}, do módulo \texttt{superficie\_decisao.py}, também marca os protótipos $\mathbf{m}_i$ e $\mathbf{m}_j$ (símbolo $\times$) e o segmento que os liga, evidenciando a construção geométrica da superfície de decisão. Os eixos usam a mesma escala (\texttt{set\_aspect('equal')}), para que a perpendicularidade entre a reta e o segmento $\overline{\mathbf{m}_i\mathbf{m}_j}$, prevista pela Eq.~\eqref{eq:superficie}, fique visível. Os limites dos eixos são fixados antes de desenhar a reta, de modo que ela não expanda a escala e ``achate'' a nuvem de pontos.
 
 A reta é desenhada isolando $x_2$ em $w_1x_1 + w_2x_2 + w_0 = 0$, isto é, $x_2 = -(w_1x_1 + w_0)/w_2$. Há tratamento para o caso degenerado $w_2 = 0$ (reta vertical).
 
@@ -280,33 +328,33 @@ A reta é desenhada isolando $x_2$ em $w_1x_1 + w_2x_2 + w_0 = 0$, isto é, $x_2
 \section{Resultados}\label{sec:resultados}
 %=====================================================================
 
-\subsection{Protótipos e funções de decisão (4 atributos)}
+\subsection{Protótipos e funções de decisão}
 
 \begin{table}[H]
 \centering
 \caption{Vetores protótipos $\mathbf{m}_j$ estimados no conjunto de treino (35 amostras por classe).}
 \label{tab:prototipos}
-\begin{tabular}{lcccc}
+\begin{tabular}{lcc}
 \toprule
-Classe & $x_1$ & $x_2$ & $x_3$ & $x_4$ \\
+Classe & $x_1$ (comprimento da pétala) & $x_2$ (largura da pétala) \\
 \midrule
-\emph{setosa}     & 4,989 & 3,426 & 1,486 & 0,240 \\
-\emph{versicolor} & 5,949 & 2,731 & 4,237 & 1,309 \\
-\emph{virginica}  & 6,683 & 3,009 & 5,631 & 2,069 \\
+\emph{setosa}     & 1,486 & 0,240 \\
+\emph{versicolor} & 4,237 & 1,309 \\
+\emph{virginica}  & 5,631 & 2,069 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Substituindo os protótipos na Eq.~\eqref{eq:decisao}, obtêm-se as funções de decisão:
+Os protótipos de \emph{versicolor} e \emph{setosa} são muito próximos dos valores do exemplo ilustrativo, $(4{,}3;\ 1{,}3)^t$ e $(1{,}5;\ 0{,}3)^t$, o que indica que a amostra de treino representa bem as classes. Substituindo os protótipos na Eq.~\eqref{eq:decisao}, obtêm-se as funções de decisão:
 \begin{align*}
-d_{\text{setosa}}(\mathbf{x})     &= 4{,}989x_1 + 3{,}426x_2 + 1{,}486x_3 + 0{,}240x_4 - 19{,}443\\
-d_{\text{versicolor}}(\mathbf{x}) &= 5{,}949x_1 + 2{,}731x_2 + 4{,}237x_3 + 1{,}309x_4 - 31{,}256\\
-d_{\text{virginica}}(\mathbf{x})  &= 6{,}683x_1 + 3{,}009x_2 + 5{,}631x_3 + 2{,}069x_4 - 44{,}852
+d_{\text{setosa}}(\mathbf{x})     &= 1{,}486x_1 + 0{,}240x_2 - 1{,}132\\
+d_{\text{versicolor}}(\mathbf{x}) &= 4{,}237x_1 + 1{,}309x_2 - 9{,}833\\
+d_{\text{virginica}}(\mathbf{x})  &= 5{,}631x_1 + 2{,}069x_2 - 17{,}996
 \end{align*}
 
 \subsection{Desempenho dos classificadores (i) e (ii)}
 
-Os dois classificadores obtiveram \textbf{91,11\%} de acurácia (41 acertos em 45) no conjunto de teste, e o programa confirmou que as 45 predições são idênticas. Esse é o resultado previsto pela equivalência demonstrada na Seção~\ref{sec:equivalencia}: não há erro de implementação no fato de as acurácias coincidirem, pois se trata do mesmo classificador escrito de duas formas.
+Os dois classificadores obtiveram \textbf{93,33\%} de acurácia (42 acertos em 45) no conjunto de teste, e o programa confirmou que as 45 predições são idênticas. Esse é o resultado previsto pela equivalência demonstrada na Seção~\ref{sec:equivalencia}: não há erro de implementação no fato de as acurácias coincidirem, pois se trata do mesmo classificador escrito de duas formas.
 
 \begin{table}[H]
 \centering
@@ -318,37 +366,27 @@ Real $\backslash$ Predita & \emph{setosa} & \emph{versicolor} & \emph{virginica}
 \midrule
 \emph{setosa}     & \textbf{15} & 0 & 0 \\
 \emph{versicolor} & 0 & \textbf{14} & 1 \\
-\emph{virginica}  & 0 & 3 & \textbf{12} \\
+\emph{virginica}  & 0 & 2 & \textbf{13} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-A classe \emph{setosa} é reconhecida sem erros. Todos os quatro erros ocorrem entre \emph{versicolor} e \emph{virginica}, classes cujos protótipos são mais próximos entre si (Tabela~\ref{tab:prototipos}).
-
-\subsection{Superfícies de decisão com 4 atributos}\label{sec:hiperplanos}
-
-Aplicando a Eq.~\eqref{eq:superficie} aos protótipos 4D, obtêm-se os hiperplanos:
-\begin{align*}
-\textit{setosa} \times \textit{versicolor}:&\quad -0{,}96x_1 + 0{,}69x_2 - 2{,}75x_3 - 1{,}07x_4 + 11{,}81 = 0\\
-\textit{setosa} \times \textit{virginica}:&\quad -1{,}69x_1 + 0{,}42x_2 - 4{,}15x_3 - 1{,}83x_4 + 25{,}41 = 0\\
-\textit{versicolor} \times \textit{virginica}:&\quad -0{,}73x_1 - 0{,}28x_2 - 1{,}39x_3 - 0{,}76x_4 + 13{,}60 = 0
-\end{align*}
-Os maiores coeficientes em módulo estão em $x_3$ e $x_4$ (pétala), indicando que é nessas direções que os protótipos mais se afastam. Isso é coerente com o uso dos atributos da pétala no exemplo ilustrativo.
+A classe \emph{setosa} é reconhecida sem erros. Os três erros ocorrem entre \emph{versicolor} e \emph{virginica}, classes cujos protótipos são os mais próximos entre si (Tabela~\ref{tab:prototipos}).
 
 \subsection{Diagramas de dispersão: variabilidade}
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=\textwidth]{figuras/variabilidade.png}
-\caption{Dispersão das 100 amostras de cada par usando os dois primeiros atributos (sépala).}
+\caption{Dispersão das 100 amostras de cada par no plano comprimento $\times$ largura da pétala.}
 \label{fig:variabilidade}
 \end{figure}
 
-A Figura~\ref{fig:variabilidade} mostra que a nuvem de \emph{setosa} é compacta e deslocada para comprimentos menores e larguras maiores de sépala, afastada das demais. Já \emph{versicolor} e \emph{virginica} ocupam regiões muito sobrepostas, diferenciando-se apenas por uma tendência de \emph{virginica} a ter sépalas mais longas.
+A Figura~\ref{fig:variabilidade} mostra que a nuvem de \emph{setosa} é compacta e fica isolada na região de pétalas curtas e estreitas, bem afastada das demais. As nuvens de \emph{versicolor} e \emph{virginica} são mais dispersas e seguem a mesma tendência crescente, com \emph{virginica} deslocada para pétalas maiores; as duas se tocam numa faixa estreita, em torno de 4,5 a 5,1~cm de comprimento e 1,4 a 1,8~cm de largura.
 
-\subsection{Retas de decisão (2 atributos)}
+\subsection{Retas de decisão}
 
-Aplicando a Eq.~\eqref{eq:superficie} aos protótipos restritos a $(x_1, x_2)$, obtêm-se as retas da Tabela~\ref{tab:retas}. A acurácia foi medida pela regra de sinal de $d_{ij}(\mathbf{x})$.
+Aplicando a Eq.~\eqref{eq:superficie} aos protótipos da Tabela~\ref{tab:prototipos}, obtêm-se as retas da Tabela~\ref{tab:retas}. A acurácia foi medida pela regra de sinal de $d_{ij}(\mathbf{x})$.
 
 \begin{table}[H]
 \centering
@@ -358,15 +396,15 @@ Aplicando a Eq.~\eqref{eq:superficie} aos protótipos restritos a $(x_1, x_2)$, 
 \toprule
 Cenário ($\omega_i \times \omega_j$) & Reta de decisão & Teste & Completo \\
 \midrule
-\emph{setosa} $\times$ \emph{versicolor}    & $-0{,}96x_1 + 0{,}69x_2 + 3{,}11 = 0$ & 28/30 (93,3\%) & 98/100 (98\%) \\
-\emph{setosa} $\times$ \emph{virginica}     & $-1{,}69x_1 + 0{,}42x_2 + 8{,}55 = 0$ & 29/30 (96,7\%) & 98/100 (98\%) \\
-\emph{versicolor} $\times$ \emph{virginica} & $-0{,}73x_1 - 0{,}28x_2 + 5{,}43 = 0$ & 20/30 (66,7\%) & 72/100 (72\%) \\
+\emph{setosa} $\times$ \emph{versicolor}    & $-2{,}75x_1 - 1{,}07x_2 + 8{,}70 = 0$  & 30/30 (100\%) & 100/100 (100\%) \\
+\emph{setosa} $\times$ \emph{virginica}     & $-4{,}15x_1 - 1{,}83x_2 + 16{,}86 = 0$ & 30/30 (100\%) & 100/100 (100\%) \\
+\emph{versicolor} $\times$ \emph{virginica} & $-1{,}39x_1 - 0{,}76x_2 + 8{,}16 = 0$  & 27/30 (90\%)  & 94/100 (94\%) \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Como verificação, no par \emph{setosa} $\times$ \emph{versicolor} tem-se $\mathbf{w} = \mathbf{m}_{\text{set}} - \mathbf{m}_{\text{vers}} = (4{,}989 - 5{,}949;\ 3{,}426 - 2{,}731)^t = (-0{,}96;\ 0{,}69)^t$ e
-$w_0 = -\tfrac{1}{2}(36{,}63 - 42{,}85) = 3{,}11$, conforme a Eq.~\eqref{eq:coef}.
+Como verificação, no par \emph{setosa} $\times$ \emph{versicolor} tem-se $\mathbf{w} = \mathbf{m}_{\text{set}} - \mathbf{m}_{\text{vers}} = (1{,}486 - 4{,}237;\ 0{,}240 - 1{,}309)^t = (-2{,}75;\ -1{,}07)^t$ e
+$w_0 = -\tfrac{1}{2}(2{,}27 - 19{,}67) = 8{,}70$, conforme a Eq.~\eqref{eq:coef}. Multiplicando a equação por $-1$, isto é, trocando a ordem das classes para \emph{versicolor} $\times$ \emph{setosa}, obtém-se $2{,}75x_1 + 1{,}07x_2 - 8{,}70 = 0$, praticamente a mesma reta $2{,}8x_1 + 1{,}0x_2 - 8{,}9 = 0$ do exemplo ilustrativo.
 
 \begin{figure}[H]
 \centering
@@ -382,17 +420,19 @@ $w_0 = -\tfrac{1}{2}(36{,}63 - 42{,}85) = 3{,}11$, conforme a Eq.~\eqref{eq:coef
 \label{fig:completo}
 \end{figure}
 
-As Figuras~\ref{fig:teste} e~\ref{fig:completo} evidenciam a propriedade geométrica da superfície de decisão do classificador de distância mínima: em todos os cenários a reta tracejada cruza o segmento $\overline{\mathbf{m}_i\mathbf{m}_j}$ no ponto médio e perpendicularmente a ele.
+As Figuras~\ref{fig:teste} e~\ref{fig:completo} evidenciam a propriedade geométrica da superfície de decisão do classificador de distância mínima: em todos os cenários a reta tracejada cruza o segmento $\overline{\mathbf{m}_i\mathbf{m}_j}$ no ponto médio e perpendicularmente a ele. Nos pares que envolvem \emph{setosa}, a reta passa pela grande faixa vazia entre as nuvens; no par \emph{versicolor} $\times$ \emph{virginica}, ela atravessa justamente a região de contato, onde se concentram os erros.
 
 %=====================================================================
-\section{Discussão}
+\section{Discussão}\label{sec:discussao}
 %=====================================================================
 
-\paragraph{Equivalência (i) $\equiv$ (ii).} As acurácias e predições idênticas confirmam, na prática, que selecionar a menor distância euclidiana equivale a determinar o máximo da função de decisão. A vantagem da forma (ii) é computacional e conceitual: $d_j(\mathbf{x})$ é \emph{linear} em $\mathbf{x}$ e dispensa a raiz quadrada. Por isso as fronteiras entre classes são hiperplanos, o que permite escrevê-las explicitamente, como na Seção~\ref{sec:hiperplanos}.
+\paragraph{Equivalência (i) $\equiv$ (ii).} As acurácias e predições idênticas confirmam, na prática, que selecionar a menor distância euclidiana equivale a determinar o máximo da função de decisão. A vantagem da forma (ii) é computacional e conceitual: $d_j(\mathbf{x})$ é \emph{linear} em $\mathbf{x}$ e dispensa a raiz quadrada. Por isso as fronteiras entre classes são retas, o que permite escrevê-las explicitamente, como na Tabela~\ref{tab:retas}.
 
-\paragraph{Separabilidade e escolha de atributos.} Com os quatro atributos o classificador atinge 91,11\%. Com apenas as dimensões da sépala, as retas que envolvem \emph{setosa} separam quase perfeitamente as classes (98\% na amostra completa), mas o par \emph{versicolor} $\times$ \emph{virginica} fica em 72\%. A causa é visível na Figura~\ref{fig:variabilidade}: nesse subespaço as nuvens se sobrepõem, e nenhuma reta, seja qual for o método, consegue separá-las bem. No exemplo ilustrativo são usadas as dimensões da pétala, em que as classes são muito mais separáveis, o que também se reflete nos coeficientes dominantes em $x_3$ e $x_4$ dos hiperplanos 4D.
+\paragraph{Coerência entre classificador e superfícies.} Como os três sistemas usam o mesmo vetor de características e os mesmos protótipos, as retas visualizadas são exatamente as fronteiras que o classificador de três classes utiliza: uma amostra é atribuída a $\omega_i$ quando está do lado de $\omega_i$ em todas as retas que envolvem essa classe. Os erros da matriz de confusão (Tabela~\ref{tab:confusao}) correspondem às amostras de teste que aparecem do lado errado da reta \emph{versicolor} $\times$ \emph{virginica} na Figura~\ref{fig:teste}.
 
-\paragraph{Limitações do método.} O classificador de distância mínima representa cada classe apenas pela média, ignorando a dispersão e a correlação entre atributos. Ele funciona bem quando as classes formam nuvens aproximadamente esféricas, de tamanhos semelhantes e bem afastadas. Nos demais casos, métodos que modelam a variabilidade, como a máxima verossimilhança e o classificador de Bayes, tendem a ser mais adequados. Além disso, a distância euclidiana é sensível à escala dos atributos; na Iris todos estão em centímetros e em faixas comparáveis, o que atenua o problema.
+\paragraph{Escolha dos atributos.} As dimensões da pétala são as que melhor discriminam as espécies da base Iris. Em uma versão anterior deste trabalho, com a mesma partição dos dados, o classificador que usava os quatro atributos obteve 91,11\% de acurácia no teste, e as retas construídas com as dimensões da sépala acertaram apenas 72\% das amostras no par \emph{versicolor} $\times$ \emph{virginica}, cujas nuvens praticamente se sobrepõem nesse subespaço. Com as duas dimensões da pétala, a acurácia sobe para 93,33\% e a mesma reta chega a 94\%. Isso mostra que acrescentar atributos pouco discriminantes não melhora, e pode até piorar, um classificador de distância mínima, pois todos os atributos pesam igualmente no cálculo da distância.
+
+\paragraph{Limitações do método.} O classificador de distância mínima representa cada classe apenas pela média, ignorando a dispersão e a correlação entre atributos. Na Figura~\ref{fig:variabilidade}, \emph{setosa} forma uma nuvem pequena, enquanto \emph{versicolor} e \emph{virginica} são mais espalhadas e alongadas na direção da reta que une os protótipos; um classificador que levasse em conta essas diferenças de dispersão, como os métodos de máxima verossimilhança e de Bayes, poderia posicionar melhor a fronteira entre essas duas classes.
 
 \paragraph{Avaliação.} Os resultados vêm de uma única partição 70/30 com semente fixa, e o conjunto de teste tem apenas 45 amostras: cada erro equivale a cerca de 2,2 pontos percentuais. Uma estimativa mais robusta exigiria validação (por exemplo, validação cruzada), que, conforme o enunciado, ficará para um momento posterior.
 
@@ -400,8 +440,7 @@ As Figuras~\ref{fig:teste} e~\ref{fig:completo} evidenciam a propriedade geomét
 \section{Conclusão}
 %=====================================================================
 
-Foram implementados, sem bibliotecas de aprendizado de máquina, o classificador de distância mínima, o classificador pelo máximo das funções de decisão e as superfícies de decisão entre pares de classes, seguindo fielmente a formulação do reconhecimento por decisão teórica. Os resultados reproduziram as propriedades teóricas do método: (a) os dois classificadores são equivalentes e produziram as mesmas predições, com 91,11\% de acurácia no teste; (b) as superfícies de decisão são bissetores perpendiculares ao segmento entre os protótipos, o que pode ser observado nos gráficos; e (c) a qualidade da separação depende fortemente dos atributos escolhidos, já que a sépala separa bem a \emph{setosa} mas não distingue \emph{versicolor} de \emph{virginica}, ao contrário da pétala.
-
+Foram implementados, sem bibliotecas de aprendizado de máquina, o classificador de distância mínima, o classificador pelo máximo das funções de decisão e as superfícies de decisão entre pares de classes, todos com o comprimento e a largura da pétala, seguindo fielmente a formulação do reconhecimento por decisão teórica. Os resultados reproduziram as propriedades teóricas do método: (a) os dois classificadores são equivalentes e produziram as mesmas predições, com 93,33\% de acurácia no teste; (b) as superfícies de decisão são bissetores perpendiculares ao segmento entre os protótipos, o que pode ser observado nos gráficos, e a reta \emph{versicolor} $\times$ \emph{setosa} reproduz a do exemplo ilustrativo; e (c) a qualidade da separação depende fortemente dos atributos escolhidos: com a pétala, \emph{setosa} é separada sem erros e \emph{versicolor} e \emph{virginica} são distinguidas em 94\% dos casos, resultado superior ao obtido com a sépala ou com os quatro atributos.
 %=====================================================================
 % Referências
 %=====================================================================
