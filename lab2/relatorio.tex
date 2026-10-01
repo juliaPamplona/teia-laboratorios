@@ -75,7 +75,7 @@
 % Resumo
 %=====================================================================
 \begin{abstract}
-Este relatório descreve a implementação, em Python e sem o uso de bibliotecas de aprendizado de máquina, do algoritmo perceptron para duas classes de padrões. O perceptron foi treinado com vetores aumentados, vetor peso inicial nulo e incremento de correção $c = 1$, e aplicado a dois problemas: (i) a base Iris, com 70\% das amostras para treinamento e 30\% para teste (não considerados nesse relatório), nos pares \emph{setosa}~$\times$~\emph{virginica}, \emph{setosa}~$\times$~\emph{versicolor} e \emph{virginica}~$\times$~\emph{versicolor}; e (ii) as tabelas verdade OR, AND e XOR. Com os quatro atributos, os dois pares que envolvem a \emph{setosa} convergiram em duas épocas e classificaram corretamente todo o conjunto de teste, enquanto o par \emph{virginica}~$\times$~\emph{versicolor} não convergiu no limite de 1000 épocas. Com os dois primeiros atributos, as superfícies de separação foram representadas como retas sobre o diagrama de dispersão do conjunto de teste, e o comportamento de convergência se repetiu. Nas tabelas verdade, o algoritmo convergiu para OR e AND e não convergiu para XOR, cujas classes não são linearmente separáveis.
+Este relatório descreve a implementação, em Python e sem o uso de bibliotecas de aprendizado de máquina, do algoritmo perceptron para duas classes de padrões. O perceptron foi treinado com vetores aumentados e vetor peso inicial nulo, e aplicado a dois problemas: (i) a base Iris, com 70\% das amostras para treinamento e 30\% para teste, nos pares \emph{setosa}~$\times$~\emph{virginica}, \emph{setosa}~$\times$~\emph{versicolor} e \emph{virginica}~$\times$~\emph{versicolor}; e (ii) as tabelas verdade OR, AND e XOR. Com os quatro atributos, os dois pares que envolvem a \emph{setosa} convergiram em duas épocas e classificaram corretamente todo o conjunto de teste, enquanto o par \emph{virginica}~$\times$~\emph{versicolor} não convergiu no limite de 1000 épocas. Com os dois primeiros atributos, as superfícies de separação foram representadas como retas sobre o diagrama de dispersão do conjunto de teste, e o comportamento de convergência se repetiu. Nas tabelas verdade, o algoritmo convergiu para OR e AND e não convergiu para XOR, cujas classes não são linearmente separáveis. Por fim, o perceptron foi comparado com o classificador de distância mínima do laboratório anterior: os dois acertaram todo o teste nos pares com a \emph{setosa}, e no par \emph{virginica}~$\times$~\emph{versicolor} o perceptron acertou 90\% do teste, contra 83,33\% da distância mínima.
 
 \vspace{1em}
 \noindent\textbf{Palavras-chave:} reconhecimento de padrões; função discriminante linear; perceptron; separabilidade linear; base Iris; XOR.
@@ -103,6 +103,8 @@ O objetivo é implementar o perceptron cumprindo os seguintes requisitos:
   \item Realizar os itens anteriores para os pares \emph{setosa}~$\times$~\emph{virginica}, \emph{setosa}~$\times$~\emph{versicolor} e \emph{virginica}~$\times$~\emph{versicolor}, verificando se o algoritmo converge;
   \item Usar o perceptron para definir o classificador das tabelas verdade OR, AND e XOR, verificando se os algoritmos convergem;
 \end{enumerate}
+
+Além desses requisitos, os resultados do perceptron na base Iris são comparados com os do classificador de distância mínima implementado no laboratório anterior (PR3), usando a mesma divisão das amostras.
 
 %=====================================================================
 \section{Fundamentação teórica}\label{sec:teoria}
@@ -226,16 +228,17 @@ Seção & Responsabilidade \\
 4        & treinamento com os dois primeiros atributos e diagramas de dispersão com a reta de separação, sobre o conjunto de teste e sobre toda a base \\
 5        & histórico de correções por época \\
 Parte II & classificadores das tabelas verdade OR, AND e XOR \\
+7        & comparação com o classificador de distância mínima (PR3): protótipos, acurácia por par e retas de decisão sobre o conjunto de teste \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \subsection{Divisão 70\% / 30\%}
 
-Como o perceptron é supervisionado, o vetor peso precisa ser estimado só com o conjunto de treinamento, e a avaliação deve ser feita em amostras que o algoritmo não viu. Para manter as três espécies igualmente representadas, a divisão foi feita dentro de cada classe: as 50 amostras de cada espécie são embaralhadas e separadas em 35 para treinamento e 15 para teste, o que dá 105 e 45 amostras no total. Cada par de classes fica, então, com 70 amostras de treinamento e 30 de teste. A semente aleatória foi fixada em 42 (linha 149) para que os resultados possam ser reproduzidos.
+Como o perceptron é supervisionado, o vetor peso precisa ser estimado só com o conjunto de treinamento, e a avaliação deve ser feita em amostras que o algoritmo não viu. Para manter as três espécies igualmente representadas, a divisão foi feita dentro de cada classe: as 50 amostras de cada espécie são embaralhadas e separadas em 35 para treinamento e 15 para teste, o que dá 105 e 45 amostras no total. Cada par de classes fica, então, com 70 amostras de treinamento e 30 de teste. A semente aleatória foi fixada em 41 (linha 149) para que os resultados possam ser reproduzidos.
 
 \begin{lstlisting}[firstnumber=120,title=\texttt{pr4\_perceptron\_iris\_colab.py}]
-def divisao_treino_teste_estratificada(X, y, percentual_treino=0.70, seed=40):
+def divisao_treino_teste_estratificada(X, y, percentual_treino=0.70, seed=41):
     rng = np.random.default_rng(seed)
 
     indices_treino = []
@@ -253,16 +256,16 @@ def divisao_treino_teste_estratificada(X, y, percentual_treino=0.70, seed=40):
 
 \subsection{Treinamento}\label{sec:treinamento}
 
-O algoritmo da Seção~\ref{sec:algoritmo} está na função \texttt{treinar\_perceptron}. Os padrões são convertidos em vetores aumentados na linha 196, conforme a Eq.~\eqref{eq:aumentado}, e o vetor peso começa nulo, $\mathbf{w}(1) = \mathbf{0}$ (linha 200). O incremento de correção usado foi $c = 1$, passado pelo parâmetro \texttt{taxa\_aprendizado}.
+O algoritmo da Seção~\ref{sec:algoritmo} está na função \texttt{treinar\_perceptron}. Os padrões são convertidos em vetores aumentados na linha 196, conforme a Eq.~\eqref{eq:aumentado}, e o vetor peso começa nulo, $\mathbf{w}(1) = \mathbf{0}$ (linha 200). O incremento de correção $c$ é passado pelo parâmetro \texttt{taxa\_aprendizado} (a taxa de aprendizagem $\eta$ do código): foi usado $c = 0{,}01$ no experimento com os quatro atributos e $c = 1$ nos demais (dois primeiros atributos, tabelas verdade e comparação com a distância mínima).
 
 \begin{lstlisting}[firstnumber=193,title=\texttt{pr4\_perceptron\_iris\_colab.py}]
-def treinar_perceptron(X_treino_binario, d_treino, taxa_aprendizado=1.0, max_epocas=1000):
+def treinar_perceptron(X_treino_binario, d_treino, taxa_aprendizado=0.01, max_epocas=1000):
 
     # Adiciona o termo de bias: 1
     X_aumentado = np.c_[X_treino_binario, np.ones(len(X_treino_binario))]
 
-    # Vetor peso inicial w(1):
-    # todos os pesos começam em zero.
+    # Pesos iniciais conforme a ideia do exemplo da aula:
+    # vetor inicialmente nulo.
     w = np.zeros(X_aumentado.shape[1])
 
     erros_por_epoca = []
@@ -296,7 +299,7 @@ Com $d = +1$, essa expressão é exatamente a regra i); com $d = -1$, a condiç�
 
 Ao final de cada época, a função verifica se houve alguma correção. Se não houve (linhas 219--220), todos os padrões de treinamento satisfazem a Eq.~\eqref{eq:separavel} e o treinamento termina. Como em classes não linearmente separáveis as correções nunca param, foi preciso definir um limite de 1000 épocas; ao atingi-lo, o treinamento é interrompido e registrado como não convergente. A função também devolve o número de correções de cada época, usado na Seção~\ref{sec:convergencia}.
 
-O valor de $c$ não altera os resultados quando $\mathbf{w}(1) = \mathbf{0}$: nesse caso, todo vetor peso gerado pelo algoritmo é múltiplo de $c$, e a condição de correção não depende da escala de $\mathbf{w}$. Por isso foi mantido $c = 1$.
+O valor de $c$ não altera as decisões quando $\mathbf{w}(1) = \mathbf{0}$: nesse caso, todo vetor peso gerado pelo algoritmo é múltiplo de $c$, e a condição de correção não depende da escala de $\mathbf{w}$. Usar $c = 0{,}01$ em vez de $c = 1$ produz, portanto, as mesmas correções, o mesmo número de épocas e a mesma superfície de separação, apenas com o vetor peso multiplicado por $0{,}01$. A comparação da Seção~\ref{sec:comparacao}, que treina os mesmos pares com $c = 1$, confirma isso: os resultados coincidem com os da Tabela~\ref{tab:iris4d}.
 
 Antes de aplicar o algoritmo à base Iris, a função foi testada com os padrões do exemplo da Seção~\ref{sec:exemplo}, na mesma ordem de apresentação, com $c = 1$ e $\mathbf{w}(1) = \mathbf{0}$. O vetor obtido foi $\mathbf{w} = (-2, 0, 1)^t$, igual ao do exemplo, o que confirmou que a implementação estava correta.
 
@@ -333,15 +336,15 @@ O classificador principal usa os quatro atributos, e sua superfície de separaç
   x_2 = -\frac{w_1x_1 + w_3}{w_2}, \qquad w_2 \neq 0,
   \label{eq:reta}
 \end{equation}
-que é desenhada sobre as amostras do conjunto de teste. Se $w_2 = 0$, desenha-se a reta vertical $x_1 = -w_3/w_1$. Quando o algoritmo não converge, a reta exibida é a do vetor peso da última época, em linha tracejada.
+que é desenhada sobre as amostras do conjunto de teste. Se $w_2 = 0$, desenha-se a reta vertical $x_1 = -w_3/w_1$. Quando o algoritmo não converge, a reta exibida é a do vetor peso da última época, em linha tracejada. A legenda de cada gráfico traz a equação da reta desenhada, no formato $w_1x_1 + w_2x_2 + w_3 = 0$, montada a partir do vetor peso pela função \texttt{equacao\_reta} (linha 331).
 
-Na primeira versão dos gráficos, a reta do par \emph{virginica}~$\times$~\emph{versicolor}, quase vertical, esticava o eixo vertical até valores entre $-20$ e $35$ e espremia os pontos em uma faixa estreita. Por isso, o eixo vertical passou a ser limitado ao intervalo dos dados (linha 405).
+No par \emph{virginica}~$\times$~\emph{versicolor}, a reta final passa longe das amostras e, sem ajuste, esticava o eixo vertical até $x_2 \approx 10$, espremendo os pontos em uma faixa estreita. Por isso, o eixo vertical foi limitado ao intervalo dos dados (linha 410).
 
 \subsection{Tabelas verdade}
 
 Nas tabelas verdade, os padrões são os quatro pares de entrada $(x_1, x_2) \in \{0,1\}^2$, e a saída lógica foi convertida em resposta desejada: saída 1 corresponde a $d = +1$ (classe $\omega_1$) e saída 0 a $d = -1$ (classe $\omega_2$). Os padrões são apresentados na ordem $(1,1)$, $(1,0)$, $(0,1)$, $(0,0)$, e o treinamento usa a mesma função e os mesmos parâmetros da base Iris:
 
-\begin{lstlisting}[firstnumber=559,title=\texttt{pr4\_perceptron\_iris\_colab.py}]
+\begin{lstlisting}[firstnumber=564,title=\texttt{pr4\_perceptron\_iris\_colab.py}]
 def executar_tabela_verdade(nome, saidas_logicas):
     # Converte 1 -> +1 e 0 -> -1
     d = np.where(saidas_logicas == 1, 1, -1)
@@ -369,7 +372,7 @@ A Tabela~\ref{tab:iris4d} mostra o resultado dos três perceptrons treinados com
 
 \begin{table}[H]
 \centering
-\caption{Perceptron com os quatro atributos (70 amostras de treinamento e 30 de teste por par).}
+\caption{Perceptron com os quatro atributos e $c = 0{,}01$ (70 amostras de treinamento e 30 de teste por par).}
 \label{tab:iris4d}
 \begin{tabular}{lccc}
 \toprule
@@ -377,21 +380,21 @@ Par ($\omega_1 \times \omega_2$) & Convergiu? & Épocas & Acertos no teste \\
 \midrule
 \emph{setosa} $\times$ \emph{virginica}     & sim & 2    & 30/30 (100\%) \\
 \emph{setosa} $\times$ \emph{versicolor}    & sim & 2    & 30/30 (100\%) \\
-\emph{virginica} $\times$ \emph{versicolor} & não & 1000 & 29/30 (96,67\%) \\
+\emph{virginica} $\times$ \emph{versicolor} & não & 1000 & 27/30 (90,00\%) \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 Substituindo os vetores peso estimados na Eq.~\eqref{eq:superficie}, chega-se às seguintes superfícies de separação:
 \begin{align*}
-\textit{setosa} \times \textit{virginica}:&\quad 1{,}7x_1 + 4{,}3x_2 - 7{,}1x_3 - 3{,}6x_4 + 1{,}0 = 0\\
-\textit{setosa} \times \textit{versicolor}:&\quad 1{,}8x_1 + 6{,}2x_2 - 8{,}6x_3 - 3{,}9x_4 + 1{,}0 = 0\\
-\textit{virginica} \times \textit{versicolor}:&\quad -75{,}0x_1 - 133{,}5x_2 + 153{,}5x_3 + 202{,}4x_4 - 239{,}0 = 0
+\textit{setosa} \times \textit{virginica}:&\quad 0{,}024x_1 + 0{,}040x_2 - 0{,}065x_3 - 0{,}030x_4 + 0{,}010 = 0\\
+\textit{setosa} \times \textit{versicolor}:&\quad 0{,}002x_1 + 0{,}014x_2 - 0{,}017x_3 - 0{,}008x_4 = 0\\
+\textit{virginica} \times \textit{versicolor}:&\quad -0{,}309x_1 - 0{,}703x_2 + 0{,}696x_3 + 1{,}859x_4 - 2{,}030 = 0
 \end{align*}
 
-Os pares com a \emph{setosa} precisaram de apenas uma época com correções (5 e 9, respectivamente); na segunda época, todo o conjunto de treinamento já foi classificado corretamente. Os coeficientes negativos de $x_3$ e $x_4$ fazem sentido: $g(\mathbf{y}) > 0$ corresponde à \emph{setosa}, que tem pétalas bem menores que as das outras espécies.
+Os pares com a \emph{setosa} precisaram de apenas uma época com correções (5 e 2, respectivamente); na segunda época, todo o conjunto de treinamento já foi classificado corretamente. No par \emph{setosa}~$\times$~\emph{versicolor}, as duas correções tiveram sinais opostos e se cancelaram na componente do limiar, que terminou nula. Os coeficientes negativos de $x_3$ e $x_4$ fazem sentido: $g(\mathbf{y}) > 0$ corresponde à \emph{setosa}, que tem pétalas bem menores que as das outras espécies.
 
-Já no par \emph{virginica}~$\times$~\emph{versicolor}, nenhuma das 1000 épocas terminou sem correções; mesmo no fim do treinamento, ainda ocorriam de 2 a 6 correções por época. O hiperplano apresentado acima é, portanto, apenas o da época 1000, e não uma solução convergida. Mesmo assim, ele acertou 29 das 30 amostras de teste.
+Já no par \emph{virginica}~$\times$~\emph{versicolor}, nenhuma das 1000 épocas terminou sem correções; mesmo nas últimas 50 épocas, ainda ocorriam de 2 a 9 correções por época. O hiperplano apresentado acima é, portanto, apenas o da época 1000, e não uma solução convergida. Mesmo assim, ele acertou 27 das 30 amostras de teste; as três amostras erradas são de \emph{versicolor} classificadas como \emph{virginica}. Aqui os maiores coeficientes estão em $x_4$ e $x_3$, ou seja, nas medidas da pétala, que são maiores na \emph{virginica}.
 
 \subsection{Base Iris com os dois primeiros atributos}
 
@@ -405,9 +408,9 @@ A Tabela~\ref{tab:iris2d} reúne as retas obtidas com o comprimento e a largura 
 \toprule
 Par ($\omega_1 \times \omega_2$) & Reta de separação & Convergiu? & Épocas & Teste \\
 \midrule
-\emph{setosa} $\times$ \emph{virginica}     & $-43{,}3x_1 + 69{,}6x_2 + 36{,}0 = 0$  & sim & 99   & 29/30 \\
-\emph{setosa} $\times$ \emph{versicolor}    & $-76{,}9x_1 + 98{,}4x_2 + 120{,}0 = 0$ & sim & 770  & 30/30 \\
-\emph{virginica} $\times$ \emph{versicolor} & $25{,}1x_1 + 1{,}6x_2 - 171{,}0 = 0$   & não & 1000 & 19/30 \\
+\emph{setosa} $\times$ \emph{virginica}     & $-45{,}0x_1 + 67{,}5x_2 + 48{,}0 = 0$  & sim & 134  & 30/30 \\
+\emph{setosa} $\times$ \emph{versicolor}    & $-60{,}1x_1 + 76{,}1x_2 + 96{,}0 = 0$  & sim & 577  & 30/30 \\
+\emph{virginica} $\times$ \emph{versicolor} & $33{,}0x_1 + 16{,}9x_2 - 322{,}0 = 0$  & não & 1000 & 15/30 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -415,29 +418,29 @@ Par ($\omega_1 \times \omega_2$) & Reta de separação & Convergiu? & Épocas & 
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.72\textwidth]{figuras/sv_teste.png}
-\caption{\emph{Setosa} $\times$ \emph{virginica}: conjunto de teste e reta de separação $-43{,}3x_1 + 69{,}6x_2 + 36{,}0 = 0$.}
+\caption{\emph{Setosa} $\times$ \emph{virginica}: conjunto de teste e reta de separação $-45{,}0x_1 + 67{,}5x_2 + 48{,}0 = 0$.}
 \label{fig:sv}
 \end{figure}
 
-Para \emph{setosa}~$\times$~\emph{virginica} (Figura~\ref{fig:sv}), o algoritmo convergiu em 99 épocas, e a reta separa todas as amostras de treinamento. No teste, porém, uma amostra de \emph{virginica}, com $(x_1, x_2) = (6{,}2;\ 3{,}4)$, ficou do lado da \emph{setosa}. A convergência garante a separação do conjunto de treinamento, mas não de amostras novas.
+Para \emph{setosa}~$\times$~\emph{virginica} (Figura~\ref{fig:sv}), o algoritmo convergiu em 134 épocas, e a reta separa todas as amostras de treinamento e também todas as de teste. A amostra de \emph{virginica} com $(x_1, x_2) = (4{,}9;\ 2{,}5)$, bem mais próxima da nuvem da \emph{setosa} que as demais, fica perto da reta, mas do lado correto. Ainda assim, vale lembrar que a convergência garante apenas a separação do conjunto de treinamento, e não de amostras novas.
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.72\textwidth]{figuras/sver_teste.png}
-\caption{\emph{Setosa} $\times$ \emph{versicolor}: conjunto de teste e reta de separação $-76{,}9x_1 + 98{,}4x_2 + 120{,}0 = 0$.}
+\caption{\emph{Setosa} $\times$ \emph{versicolor}: conjunto de teste e reta de separação $-60{,}1x_1 + 76{,}1x_2 + 96{,}0 = 0$.}
 \label{fig:sver}
 \end{figure}
 
-Em \emph{setosa}~$\times$~\emph{versicolor} (Figura~\ref{fig:sver}) também houve convergência, mas só após 770 épocas, e a reta separou todas as amostras de teste. A demora se explica pela proximidade entre as duas nuvens no plano da sépala: como a folga entre elas é pequena, o algoritmo faz muitas correções até chegar a uma reta que separe todos os pontos.
+Em \emph{setosa}~$\times$~\emph{versicolor} (Figura~\ref{fig:sver}) também houve convergência, mas só após 577 épocas, e a reta separou todas as amostras de teste. A demora se explica pela proximidade entre as duas nuvens no plano da sépala: como a folga entre elas é pequena, o algoritmo faz muitas correções até chegar a uma reta que separe todos os pontos.
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.72\textwidth]{figuras/vver_teste.png}
-\caption{\emph{Virginica} $\times$ \emph{versicolor}: conjunto de teste e reta da época 1000, $25{,}1x_1 + 1{,}6x_2 - 171{,}0 = 0$, tracejada porque o algoritmo não convergiu.}
+\caption{\emph{Virginica} $\times$ \emph{versicolor}: conjunto de teste e reta da época 1000, $33{,}0x_1 + 16{,}9x_2 - 322{,}0 = 0$, tracejada porque o algoritmo não convergiu.}
 \label{fig:vver}
 \end{figure}
 
-No par \emph{virginica}~$\times$~\emph{versicolor} (Figura~\ref{fig:vver}), as nuvens de pontos se misturam no plano da sépala, e não há reta que deixe todas as amostras de uma espécie de um lado e todas as da outra do lado oposto. O algoritmo não convergiu, e a reta da última época, quase vertical em torno de $x_1 \approx 6{,}6$, deixou 11 das 30 amostras de teste do lado errado.
+No par \emph{virginica}~$\times$~\emph{versicolor} (Figura~\ref{fig:vver}), as nuvens de pontos se misturam no plano da sépala, e não há reta que deixe todas as amostras de uma espécie de um lado e todas as da outra do lado oposto. O algoritmo não convergiu, e a reta da última época ficou no canto superior direito do gráfico, fora da região ocupada pelas amostras. Com isso, todas as amostras de teste caíram do lado da \emph{versicolor}: as 15 de \emph{versicolor} foram classificadas corretamente e as 15 de \emph{virginica}, não. No treinamento, essa reta acertou apenas 36 das 70 amostras.
 
 \subsection{Convergência}\label{sec:convergencia}
 
@@ -452,7 +455,7 @@ A Figura~\ref{fig:erros} mostra quantas correções ocorreram em cada época do 
 \label{fig:erros}
 \end{figure}
 
-Nos pares com a \emph{setosa}, as correções vão diminuindo até chegar a zero, quando o algoritmo converge. Em \emph{virginica}~$\times$~\emph{versicolor} isso não acontece: depois de uma fase inicial com 28 a 40 correções por época, o algoritmo passa a alternar entre 28 e 30 correções e permanece assim até a época 1000.
+Nos pares com a \emph{setosa}, as correções caem rapidamente nas primeiras épocas (de 20 e 27 na primeira época para poucas unidades) e passam a maior parte do treinamento em 2 ou 3 por época, até zerarem nas épocas 134 e 577, quando o algoritmo converge. Em \emph{virginica}~$\times$~\emph{versicolor} isso não acontece: nas primeiras 100 épocas ocorrem de 27 a 35 correções por época; depois o número cai um pouco, mas continua oscilando entre 20 e 30 e, nas últimas 30 épocas, entre 22 e 26, sem nunca chegar a zero até a época 1000.
 
 Respondendo à pergunta do enunciado, o algoritmo não converge para o par \emph{virginica}~$\times$~\emph{versicolor}. Isso vale tanto para os quatro atributos quanto para os dois primeiros: em nenhum dos casos foi encontrado um vetor peso que satisfizesse a Eq.~\eqref{eq:separavel} para todo o conjunto de treinamento, o que indica que essas duas classes não são linearmente separáveis. Nos pares com a \emph{setosa}, ao contrário, houve convergência nas duas representações.
 
@@ -519,16 +522,100 @@ O motivo é que as classes do XOR não são linearmente separáveis. Pela Eq.~\e
 Somando as duas primeiras desigualdades, obtém-se $w_1 + w_2 + w_3 > -w_3 > 0$, o que contradiz a terceira. Não existe, portanto, reta capaz de separar as saídas 1 das saídas 0.
 
 %=====================================================================
+\section{Comparação com o classificador de distância mínima}\label{sec:comparacao}
+%=====================================================================
+
+No laboratório anterior (PR3), cada classe foi representada por um protótipo, o vetor médio das suas amostras de treinamento,
+\begin{equation}
+  \mathbf{m}_j = \frac{1}{N_j}\sum_{\mathbf{x} \in \omega_j} \mathbf{x},
+  \label{eq:prototipo}
+\end{equation}
+e cada amostra foi atribuída à classe do protótipo mais próximo pela distância euclidiana. Como a regra da distância mínima é equivalente à do máximo das funções de decisão $d_j(\mathbf{x}) = \mathbf{x}^t\mathbf{m}_j - \frac{1}{2}\mathbf{m}_j^t\mathbf{m}_j$, a comparação foi feita apenas com a distância mínima. A fronteira entre duas classes $\omega_i$ e $\omega_j$ é a mediatriz do segmento que une os protótipos, que no plano $(x_1, x_2)$ é a reta
+\begin{equation}
+  2(m_{j1} - m_{i1})\,x_1 + 2(m_{j2} - m_{i2})\,x_2 + \left(\|\mathbf{m}_i\|^2 - \|\mathbf{m}_j\|^2\right) = 0,
+  \label{eq:mediatriz}
+\end{equation}
+calculada pela função \texttt{coeficientes\_reta\_decisao} (linha 773).
+
+Na Seção~7 do código, os protótipos foram calculados com as mesmas 105 amostras de treinamento usadas pelo perceptron (função \texttt{calcular\_prototipos}, linha 671), e os dois classificadores foram avaliados nas mesmas 30 amostras de teste de cada par. Para cada par, a distância mínima usa apenas os dois protótipos envolvidos, e o perceptron é treinado com os quatro atributos e $c = 1$. A Tabela~\ref{tab:prototipos} mostra os protótipos obtidos.
+
+\begin{table}[H]
+\centering
+\caption{Protótipos (vetores médios) calculados com o conjunto de treinamento.}
+\label{tab:prototipos}
+\begin{tabular}{lcccc}
+\toprule
+Classe & $x_1$ & $x_2$ & $x_3$ & $x_4$ \\
+\midrule
+\emph{setosa}     & 4,974 & 3,437 & 1,466 & 0,243 \\
+\emph{versicolor} & 5,874 & 2,740 & 4,203 & 1,303 \\
+\emph{virginica}  & 6,663 & 3,011 & 5,591 & 2,060 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+A Tabela~\ref{tab:comparacao} compara a acurácia dos dois métodos no conjunto de teste, com os quatro atributos.
+
+\begin{table}[H]
+\centering
+\caption{Acurácia no teste com os quatro atributos: distância mínima (PR3) $\times$ perceptron (PR4).}
+\label{tab:comparacao}
+\begin{tabular}{lcccc}
+\toprule
+Par & Distância mínima & Perceptron & Épocas & Convergiu? \\
+\midrule
+\emph{setosa} $\times$ \emph{virginica}     & 30/30 (100\%)   & 30/30 (100\%) & 2    & sim \\
+\emph{setosa} $\times$ \emph{versicolor}    & 30/30 (100\%)   & 30/30 (100\%) & 2    & sim \\
+\emph{virginica} $\times$ \emph{versicolor} & 25/30 (83,33\%) & 27/30 (90\%)  & 1000 & não \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Nos pares com a \emph{setosa}, os dois métodos acertam todo o teste: as classes estão bem afastadas, e tanto a mediatriz entre os protótipos quanto o hiperplano do perceptron as separam. A diferença aparece em \emph{virginica}~$\times$~\emph{versicolor}. A distância mínima errou 5 amostras (três de \emph{virginica} e duas de \emph{versicolor}), enquanto o hiperplano da época 1000 do perceptron errou 3, todas de \emph{versicolor}. Como o número de épocas e a acurácia do perceptron coincidem com os da Tabela~\ref{tab:iris4d}, obtidos com $c = 0{,}01$, essa comparação também confirma que o valor de $c$ não muda o resultado.
+
+As Figuras~\ref{fig:comp_sv}, \ref{fig:comp_sver} e~\ref{fig:comp_vver} mostram, no plano dos dois primeiros atributos, a reta da distância mínima (Eq.~\eqref{eq:mediatriz}, com os protótipos restritos a $x_1$ e $x_2$) e a reta do perceptron treinado com esses dois atributos, a mesma da Tabela~\ref{tab:iris2d}, sobre o conjunto de teste; a equação de cada reta aparece na legenda. As retas da distância mínima obtidas foram:
+\begin{align*}
+\textit{setosa} \times \textit{virginica}:&\quad 3{,}38x_1 - 0{,}85x_2 - 16{,}90 = 0\\
+\textit{setosa} \times \textit{versicolor}:&\quad 1{,}80x_1 - 1{,}39x_2 - 5{,}46 = 0\\
+\textit{virginica} \times \textit{versicolor}:&\quad -1{,}58x_1 - 0{,}54x_2 + 11{,}45 = 0
+\end{align*}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{figuras/comp_sv.png}
+\caption{\emph{Setosa} $\times$ \emph{virginica}: retas da distância mínima e do perceptron sobre o conjunto de teste, com os protótipos marcados por ``X''.}
+\label{fig:comp_sv}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{figuras/comp_sver.png}
+\caption{\emph{Setosa} $\times$ \emph{versicolor}: retas da distância mínima e do perceptron sobre o conjunto de teste.}
+\label{fig:comp_sver}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{figuras/comp_vver.png}
+\caption{\emph{Virginica} $\times$ \emph{versicolor}: retas da distância mínima e do perceptron (tracejada, pois não convergiu) sobre o conjunto de teste.}
+\label{fig:comp_vver}
+\end{figure}
+
+Com apenas a sépala, a distância mínima acertou 29, 30 e 19 das 30 amostras de teste nos três pares, contra 30, 30 e 15 do perceptron. Em \emph{setosa}~$\times$~\emph{virginica} (Figura~\ref{fig:comp_sv}), a mediatriz deixa do lado errado a amostra de \emph{virginica} em $(4{,}9;\ 2{,}5)$, que o perceptron classifica corretamente: como o perceptron ajusta a reta aos próprios pontos de treinamento, e não apenas às médias, ele consegue acomodar amostras afastadas do centro da classe. Em \emph{virginica}~$\times$~\emph{versicolor} (Figura~\ref{fig:comp_vver}), a situação se inverte: a mediatriz passa entre as duas nuvens e acerta a maior parte das amostras, enquanto a reta do perceptron, que não convergiu, termina fora da região dos dados. Nesse caso, a média das classes é uma informação mais estável do que o vetor peso de uma época qualquer de um treinamento que não converge.
+
+%=====================================================================
 \section{Discussão}
 %=====================================================================
 
 Os experimentos se comportaram como a teoria prevê: o perceptron converge quando as classes são linearmente separáveis e segue corrigindo o vetor peso indefinidamente quando não são. A \emph{setosa} se separa linearmente das outras duas espécies tanto com os quatro atributos quanto apenas com a sépala, enquanto \emph{virginica} e \emph{versicolor} não se separam em nenhuma das duas representações. Nas tabelas verdade acontece o mesmo: OR e AND são linearmente separáveis, o XOR não. Fica claro que, em problemas reais, encontrar classes linearmente separáveis é mais exceção do que regra.
 
-A escolha dos atributos também pesou no tempo de convergência. Com os quatro atributos, os pares com a \emph{setosa} convergiram em duas épocas; usando só a sépala, foram necessárias 99 e 770. Os coeficientes de maior módulo nos hiperplanos estão em $x_3$ e $x_4$, o que indica que são as medidas da pétala que mais afastam as classes. Sem elas, as nuvens ficam mais próximas e a busca pela reta de separação demora mais.
+A escolha dos atributos também pesou no tempo de convergência. Com os quatro atributos, os pares com a \emph{setosa} convergiram em duas épocas; usando só a sépala, foram necessárias 134 e 577. Os coeficientes de maior módulo nos hiperplanos estão em $x_3$ e $x_4$, o que indica que são as medidas da pétala que mais afastam as classes. Sem elas, as nuvens ficam mais próximas e a busca pela reta de separação demora mais.
 
-Outro ponto é o significado do vetor peso quando não há convergência. Como ele continua sendo corrigido a cada época, o resultado final depende de quando o treinamento é interrompido. No par \emph{virginica}~$\times$~\emph{versicolor} com quatro atributos, o vetor da época 1000 acertou 29 das 30 amostras de teste, mas nada garante esse desempenho: outra época de parada poderia levar a um hiperplano diferente. Com a sépala, onde a sobreposição é maior, a reta final acertou apenas 19 das 30.
+Outro ponto é o significado do vetor peso quando não há convergência. Como ele continua sendo corrigido a cada época, o resultado final depende de quando o treinamento é interrompido. No par \emph{virginica}~$\times$~\emph{versicolor} com quatro atributos, o vetor da época 1000 acertou 27 das 30 amostras de teste, mas nada garante esse desempenho: outra época de parada poderia levar a um hiperplano diferente. Com a sépala, onde a sobreposição é maior, a reta final acertou apenas 15 das 30, porque deixou todas as amostras do mesmo lado.
 
-Por fim, vale registrar algumas limitações. Os resultados vêm de uma única divisão 70/30 com semente fixa, e cada par tem só 30 amostras de teste, de modo que um único erro já representa cerca de 3,3 pontos percentuais. Além disso, a não convergência foi observada dentro de um limite de 1000 épocas. No XOR, a impossibilidade de separação foi demonstrada algebricamente; em \emph{virginica}~$\times$~\emph{versicolor}, a evidência é experimental, dada pela persistência de correções em todas as épocas.
+A comparação com a distância mínima reforça esse ponto. As duas abordagens são classificadores lineares: a distância mínima é um caso particular, com os pesos fixados diretamente pelos protótipos, enquanto o perceptron busca os pesos por correção de erros. Quando as classes são linearmente separáveis, o perceptron pode se ajustar melhor aos dados do que a mediatriz entre as médias, como no caso da amostra $(4{,}9;\ 2{,}5)$ de \emph{virginica}. Quando não são, a distância mínima sempre produz uma fronteira razoável entre as médias, enquanto o resultado do perceptron depende da época em que o treinamento é interrompido: com os quatro atributos ele superou a distância mínima (27 contra 25 acertos), mas com a sépala ficou abaixo (15 contra 19).
+
+Por fim, vale registrar algumas limitações. Os resultados vêm de uma única divisão 70/30 com semente fixa (41), e cada par tem só 30 amostras de teste, de modo que um único erro já representa cerca de 3,3 pontos percentuais. Além disso, a não convergência foi observada dentro de um limite de 1000 épocas. No XOR, a impossibilidade de separação foi demonstrada algebricamente; em \emph{virginica}~$\times$~\emph{versicolor}, a evidência é experimental, dada pela persistência de correções em todas as épocas.
 
 %=====================================================================
 \section{Conclusão}
@@ -539,6 +626,8 @@ O algoritmo perceptron para duas classes foi implementado sem bibliotecas de apr
 Na base Iris, com 70\% das amostras para treinamento e 30\% para teste, o algoritmo convergiu para os pares \emph{setosa}~$\times$~\emph{virginica} e \emph{setosa}~$\times$~\emph{versicolor}, e as superfícies de separação obtidas com os quatro atributos classificaram corretamente todo o conjunto de teste. Para \emph{virginica}~$\times$~\emph{versicolor}, o algoritmo não converge, já que essas classes não são linearmente separáveis. Os diagramas de dispersão do conjunto de teste, feitos com os dois primeiros atributos, deixam essa diferença visível: nos pares com a \emph{setosa} a reta separa as classes, enquanto no par \emph{virginica}~$\times$~\emph{versicolor} as nuvens se sobrepõem.
 
 Nas tabelas verdade, o perceptron levou aos classificadores $2x_1 + 2x_2 - 1 = 0$, para o OR, e $2x_1 + 3x_2 - 4 = 0$, para o AND, ambos reproduzindo suas tabelas. Para o XOR, o algoritmo não converge, pois nenhuma reta separa as saídas 1 das saídas 0; trata-se do caso clássico em que um perceptron simples não é suficiente.
+
+Na comparação com o classificador de distância mínima do laboratório anterior, os dois métodos acertaram todo o teste nos pares com a \emph{setosa}. No par \emph{virginica}~$\times$~\emph{versicolor}, com os quatro atributos, o perceptron acertou 90\% do teste e a distância mínima, 83,33\%; com apenas a sépala, a ordem se inverteu, porque a reta final do perceptron, sem convergência, ficou fora da região dos dados.
 
 %=====================================================================
 % Referências

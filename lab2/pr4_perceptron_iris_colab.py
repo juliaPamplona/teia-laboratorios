@@ -117,7 +117,7 @@ Não existe conjunto de validação nesta atividade.
 
 # Função que divide o conjunto com base nos parametros estabelecidos
 
-def divisao_treino_teste_estratificada(X, y, percentual_treino=0.70, seed=40):
+def divisao_treino_teste_estratificada(X, y, percentual_treino=0.70, seed=41):
     rng = np.random.default_rng(seed)
 
     indices_treino = []
@@ -146,7 +146,7 @@ def divisao_treino_teste_estratificada(X, y, percentual_treino=0.70, seed=40):
     )
 
 X_treino, X_teste, y_treino, y_teste = divisao_treino_teste_estratificada(
-    X, y, percentual_treino=0.70, seed=42
+    X, y, percentual_treino=0.70, seed=41
 )
 
 print("Treinamento:", len(X_treino), "amostras")
@@ -181,22 +181,22 @@ A decisão será:
 
 Quando houver erro, aplicamos a regra de atualização:
 
-$$\mathbf{w} \leftarrow \mathbf{w}+c\,d\,\mathbf{x}_a$$
+$$\mathbf{w} \leftarrow \mathbf{w}+\eta d\mathbf{x}_a$$
 
 onde `d` é a resposta desejada (+1 ou -1).
 
-E c é um incremento positivo de correção.
+E η é a taxa de aprendizagem.
 
 ## 2. Implementação do Perceptron
 """
 
-def treinar_perceptron(X_treino_binario, d_treino, taxa_aprendizado=1.0, max_epocas=1000):
+def treinar_perceptron(X_treino_binario, d_treino, taxa_aprendizado=0.01, max_epocas=1000):
 
     # Adiciona o termo de bias: 1
     X_aumentado = np.c_[X_treino_binario, np.ones(len(X_treino_binario))]
 
-    # Vetor peso inicial w(1):
-    # todos os pesos começam em zero.
+    # Pesos iniciais conforme a ideia do exemplo da aula:
+    # vetor inicialmente nulo.
     w = np.zeros(X_aumentado.shape[1])
 
     erros_por_epoca = []
@@ -280,7 +280,7 @@ for classe_pos, classe_neg in pares_classes_pr4:
     w, epocas, convergiu, historico = treinar_perceptron(
         Xtr_par,
         dtr_par,
-        taxa_aprendizado=1.0,
+        taxa_aprendizado=0.01,
         max_epocas=1000
     )
 
@@ -308,8 +308,8 @@ for classe_pos, classe_neg in pares_classes_pr4:
     print(f"Acurácia no teste: {acuracia * 100:.2f}%")
     print("Vetor de pesos:")
     print(w)
-    termos = " + ".join(f"({w[i]:.2f})x{i + 1}" for i in range(4))
-    print(f"Superfície de separação: g(x) = {termos} + ({w[4]:.2f}) = 0")
+    termos = " + ".join(f"({w[i]:.3f})x{i + 1}" for i in range(4))
+    print(f"Superfície de separação: g(x) = {termos} + ({w[4]:.3f}) = 0")
     print()
 
 r"""## 4. Visualização 2D da superfície de separação
@@ -327,6 +327,15 @@ e, quando `w2` é diferente de zero:
 $$x_2=-\frac{w_1x_1+w_0}{w_2}$$
 
 """
+
+def equacao_reta(a, b, c):
+    # Texto da reta a·x1 + b·x2 + c = 0, usado na legenda dos gráficos
+    return (
+        f"{'−' if a < 0 else ''}{abs(a):.2f}x₁ "
+        f"{'−' if b < 0 else '+'} {abs(b):.2f}x₂ "
+        f"{'−' if c < 0 else '+'} {abs(c):.2f} = 0"
+    )
+
 
 def plotar_perceptron_2d(
     classe_pos,
@@ -375,31 +384,27 @@ def plotar_perceptron_2d(
     xmax = Xp[:, 0].max() + 0.3
     xs = np.linspace(xmin, xmax, 300)
 
+    estilo = "-" if convergiu else "--"
+    rotulo = (
+        "Superfície de separação"
+        if convergiu
+        else "Tentativa final (não convergiu)"
+    )
+    rotulo += "\n" + equacao_reta(w[0], w[1], w[2])
+
     if abs(w[1]) > 1e-12:
         ys = -(w[0] * xs + w[2]) / w[1]
-
-        estilo = "-" if convergiu else "--"
-        rotulo = (
-            "Superfície de separação"
-            if convergiu
-            else "Tentativa final (não convergiu)"
-        )
 
         plt.plot(xs, ys, linestyle=estilo, linewidth=2, label=rotulo)
 
     else:
         x_vertical = -w[2] / w[0]
-        estilo = "-" if convergiu else "--"
 
         plt.axvline(
             x_vertical,
             linestyle=estilo,
             linewidth=2,
-            label=(
-                "Superfície de separação"
-                if convergiu
-                else "Tentativa final (não convergiu)"
-            )
+            label=rotulo
         )
 
     plt.ylim(Xp[:, 1].min() - 0.3, Xp[:, 1].max() + 0.3)
@@ -605,7 +610,7 @@ for nome, saidas in tabelas_verdade.items():
         saidas
     )
 
-"""## 7. Resumo das tabelas verdade
+"""## 6. Resumo das tabelas verdade
 
 Para OR e AND, o perceptron encontra uma reta de separação e converge.
 
@@ -622,16 +627,13 @@ for nome, resultado in resultados_logica.items():
         f"Épocas: {resultado['epocas']}"
     )
 
-print(f"\nFiguras salvas em: {PASTA_FIGURAS}")
-
-# Exibe todas as figuras geradas
-plt.show()
-
-"""# Conclusão da implementação
+r"""# Conclusão da implementação
 
 O perceptron simples foi implementado sem biblioteca de aprendizado de máquina. O treinamento utiliza um vetor aumentado, pesos inicialmente nulos, função discriminante linear e correções iterativas.
 
 Na base Iris, cada par de classes possui um perceptron binário. Para os gráficos, uma segunda execução usa apenas os dois primeiros atributos, permitindo representar a superfície de decisão como uma reta.
+
+A pergunta de convergência deve ser respondida com base no experimento realizado, informando também a representação dos atributos, a divisão 70/30, a semente e o limite de épocas.
 
 ## Respostas às perguntas da atividade
 
@@ -639,11 +641,11 @@ Na base Iris, cada par de classes possui um perceptron binário. Para os gráfic
 
 **XOR — o algoritmo converge?** Não. Nenhuma reta separa as saídas 1 das saídas 0, então o perceptron simples não converge. OR e AND convergiram.
 
-# Comparação entre os métodos Distância Mínima (PR3) e Perceptron (PR4)
+# 7 Comparação entre os métodos Distância Mínima (PR3) e Perceptron (PR4)
 
 PR3 (distância mínima): calcula a média de cada classe (protótipo) e classifica cada amostra pela classe cujo protótipo está mais próximo. É analítico, determinístico, multiclasse (3 classes de uma vez) e não tem hiperparâmetros. A fronteira entre duas classes é a mediatriz entre os protótipos, então não se adapta à forma da nuvem de dados.
 
-PR4 (Perceptron): aprende um vetor de pesos w de forma iterativa, corrigindo-o a cada erro (w ← w + c·d·xₐ). É binário, então usa um perceptron por par de classes. A fronteira é qualquer hiperplano que separe o treino, e depende da ordem de apresentação das amostras.
+PR4 (Perceptron): aprende um vetor de pesos w de forma iterativa, corrigindo-o a cada erro (w ← w + η·d·xₐ). É binário, então usa um perceptron por par de classes. A fronteira é qualquer hiperplano que separe o treino, e depende da ordem das amostras e de η.
 
 ## Diferenças principais
 
@@ -651,9 +653,488 @@ Obtenção da fronteira: cálculo direto (PR3) × tentativa e erro (PR4).
 Convergência: o PR3 sempre produz resposta; o PR4 só converge se as classes forem linearmente separáveis.
 Flexibilidade: o PR3 usa só as médias e ignora a dispersão; o PR4 usa os próprios erros e pode se ajustar melhor aos dados.
 
-Na Iris: Setosa é separável das outras duas, então ambos devem ir bem. Em Versicolor × Virginica há sobreposição: a distância mínima comete alguns erros, e o perceptron não converge (nem com 4 nem com 2 atributos).
+Na Iris: Setosa é separável das outras duas, então ambos devem ir bem. Em Versicolor × Virginica há sobreposição: a distância mínima comete alguns erros, e o perceptron pode não convergir (principalmente nos 2 atributos da sépala).
 
 XOR: só aparece no PR4. OR e AND convergem, XOR não, por não ser linearmente separável.
 
 Relação: ambos são classificadores lineares. A distância mínima é um caso particular com pesos fixados pelos protótipos, e o perceptron generaliza isso ao buscar os pesos por correção de erros.
+
+## 7.1 Calculo dos prototipos
+
+O protótipo de cada classe será o vetor médio das amostras de treinamento pertencentes à classe.
+
+$$ m_j = {\frac{1}{Nj}}{\sum_{x∈w_j} x_j}$$
+
+Cada protótipo possui os **quatro atributos**.
 """
+
+def calcular_prototipos(X_treino, y_treino):
+    prototipos = {}
+
+    for classe in np.unique(y_treino):
+        amostras_classe = X_treino[y_treino == classe]
+
+        prototipos[classe] = np.mean(
+            amostras_classe,
+            axis=0
+        )
+
+        print(
+            f"{nomes_classes[classe]}: "
+            f"{len(amostras_classe)} amostras utilizadas"
+        )
+
+    return prototipos
+
+prototipos = calcular_prototipos(X_treino, y_treino)
+
+print("\nProtótipos calculados:")
+for classe, vetor in prototipos.items():
+    print(
+        f"{nomes_classes[classe]:10s}: "
+        f"{vetor[0]:.1f}, "
+        f"{vetor[1]:.1f}, "
+        f"{vetor[2]:.1f}, "
+        f"{vetor[3]:.1f}"
+    )
+
+"""## 7.2 Calculo da distancia mínima
+
+Devido a equivalencia entre o método da distancia mínima e do máximo  das funções de decisão, a comparação será realizada apenas com o primeiro método.
+"""
+
+def distancia_euclidiana(x, prototipo):
+    return np.sqrt(np.sum((x - prototipo) ** 2))  # Fórmula da distância euclidiana
+
+
+def classificar_distancia_minima(x, prototipos):
+    distancias = {
+        classe: distancia_euclidiana(x, prototipo)
+        for classe, prototipo in prototipos.items()
+    }
+
+    # Classifica de acordo com a menor distância
+    classe_predita = min(distancias, key=distancias.get)
+
+    # Retorna a classe prevista e as distâncias calculadas
+    return classe_predita, distancias
+
+
+def prever_distancia_minima(X_amostras, prototipos):
+    previsoes = []
+
+    for x in X_amostras:
+        classe, _ = classificar_distancia_minima(x, prototipos)
+        previsoes.append(classe)
+
+    return np.array(previsoes)
+
+
+y_pred_dist = prever_distancia_minima(X_teste, prototipos)
+
+# Mostra a classe real e a classe prevista
+print("Primeiras 10 previsões:")
+for real, pred in zip(y_teste[:10], y_pred_dist[:10]):
+    print(
+        f"Real: {nomes_classes[real]:10s} | "
+        f"Prevista: {nomes_classes[pred]}"
+    )
+
+def prever_distancia_minima_par(
+    X_amostras,
+    prototipos,
+    classe_a,
+    classe_b
+):
+    # Utiliza somente os dois protótipos do par analisado
+    prototipos_par = {
+        classe_a: prototipos[classe_a],
+        classe_b: prototipos[classe_b]
+    }
+
+    previsoes = []
+
+    for x in X_amostras:
+
+        classe, _ = classificar_distancia_minima(
+            x,
+            prototipos_par
+        )
+
+        previsoes.append(classe)
+
+    return np.array(previsoes)
+
+"""## 7.3 Comparação entre os modelos
+
+Por fim temos a comparação entre o modelo classico da distancia mínima e o perceptron visto na ultima aula.
+"""
+
+def coeficientes_reta_decisao(mi, mj):
+
+    a = 2 * (mj[0] - mi[0])
+    b = 2 * (mj[1] - mi[1])
+    c = (mi[0]**2 + mi[1]**2) - (mj[0]**2 + mj[1]**2)
+
+    return a, b, c
+
+def equacao_reta_texto(a, b, c):
+    eq_str = ""
+    if a != 0:
+        eq_str += f"{a:.2f}x" if a != 1 else "x"
+    if b != 0:
+        if eq_str and b > 0: eq_str += " + "
+        elif b < 0: eq_str += " - " if eq_str else "-"
+        eq_str += f"{abs(b):.2f}y" if abs(b) != 1 else "y"
+    if c != 0:
+        if eq_str and c > 0: eq_str += " + "
+        elif c < 0: eq_str += " - " if eq_str else "-"
+        eq_str += f"{abs(c):.2f}"
+
+    if not eq_str: # All coefficients are zero (shouldn't happen for a line)
+        return "0 = 0"
+
+    return f"{eq_str} = 0"
+
+# ============================================================
+# COMPARAÇÃO: MÉTODO DO CASAMENTO × PERCEPTRON
+# ============================================================
+
+resultados_comparacao = []
+
+for classe_a, classe_b in pares_classes_pr4:
+
+    # --------------------------------------------------------
+    # Seleciona somente o par de classes
+    # --------------------------------------------------------
+
+    mascara_treino = (
+        (y_treino == classe_a) |
+        (y_treino == classe_b)
+    )
+
+    mascara_teste = (
+        (y_teste == classe_a) |
+        (y_teste == classe_b)
+    )
+
+    Xtr = X_treino[mascara_treino]
+    ytr = y_treino[mascara_treino]
+
+    Xte = X_teste[mascara_teste]
+    yte = y_teste[mascara_teste]
+
+
+    # ========================================================
+    # MÉTODO DO CASAMENTO
+    # ========================================================
+
+    y_pred_casamento = prever_distancia_minima_par(
+        Xte,
+        prototipos,
+        classe_a,
+        classe_b
+    )
+
+    acuracia_casamento = np.mean(
+        y_pred_casamento == yte
+    )
+
+
+    # ========================================================
+    # PERCEPTRON
+    # ========================================================
+
+    # Classe A → +1
+    # Classe B → -1
+
+    d_treino = np.where(
+        ytr == classe_a,
+        1,
+        -1
+    )
+
+    w, epocas, convergiu, historico = treinar_perceptron(
+        Xtr,
+        d_treino,
+        taxa_aprendizado=1.0,
+        max_epocas=1000
+    )
+
+    y_pred_perceptron, _ = prever_perceptron(
+        Xte,
+        w,
+        classe_a,
+        classe_b
+    )
+
+    acuracia_perceptron = np.mean(
+        y_pred_perceptron == yte
+    )
+
+
+    # ========================================================
+    # ARMAZENAR RESULTADOS
+    # ========================================================
+
+    resultados_comparacao.append({
+
+        "Par":
+            f"{nomes_classes[classe_a]} × "
+            f"{nomes_classes[classe_b]}",
+
+        "Casamento":
+            acuracia_casamento * 100,
+
+        "Perceptron":
+            acuracia_perceptron * 100,
+
+        "Épocas":
+            epocas,
+
+        "Convergiu":
+            convergiu
+    })
+
+
+# ============================================================
+# MOSTRAR RESULTADOS
+# ============================================================
+
+comparacao = pd.DataFrame(
+    resultados_comparacao
+)
+
+comparacao["Casamento"] = comparacao["Casamento"].map(
+    lambda x: f"{x:.2f}%"
+)
+
+comparacao["Perceptron"] = comparacao["Perceptron"].map(
+    lambda x: f"{x:.2f}%"
+)
+
+print(comparacao)
+
+"""## 7.4 Comparação gráfica entre os métodos apresentados
+
+Para melhor visualização dos resultados abaixo os dados estão sendo comparados e plotados em um gráfico de dispersão.
+"""
+
+def comparar_graficamente(
+    classe_a,
+    classe_b,
+    X2_treino,
+    y_treino,
+    X2_teste,
+    y_teste,
+    prototipos_2d,
+    nome_arquivo
+):
+
+# Seleção das classes
+
+    mascara_treino = (
+        (y_treino == classe_a) |
+        (y_treino == classe_b)
+    )
+
+    mascara_teste = (
+        (y_teste == classe_a) |
+        (y_teste == classe_b)
+    )
+
+    Xtr = X2_treino[mascara_treino]
+    ytr = y_treino[mascara_treino]
+
+    Xte = X2_teste[mascara_teste]
+    yte = y_teste[mascara_teste]
+
+
+# Menor distancia
+
+    mi = prototipos_2d[classe_a]
+    mj = prototipos_2d[classe_b]
+
+    a_c, b_c, c_c = coeficientes_reta_decisao(mi, mj)
+
+
+# Perceptron
+
+    # classe_a -> +1
+    # classe_b -> -1
+
+    d_treino = np.where(
+        ytr == classe_a,
+        1,
+        -1
+    )
+
+    w, epocas, convergiu, historico = treinar_perceptron(
+        Xtr,
+        d_treino,
+        taxa_aprendizado=1.0,
+        max_epocas=1000
+    )
+
+
+    xmin = Xte[:, 0].min() - 0.3
+    xmax = Xte[:, 0].max() + 0.3
+
+    xs = np.linspace(xmin, xmax, 300)
+
+    plt.figure(figsize=(9, 6))
+
+
+    plt.scatter(
+        Xte[yte == classe_a, 0],
+        Xte[yte == classe_a, 1],
+        label=nomes_classes[classe_a],
+        alpha=0.75
+    )
+
+
+    plt.scatter(
+        Xte[yte == classe_b, 0],
+        Xte[yte == classe_b, 1],
+        label=nomes_classes[classe_b],
+        alpha=0.75
+    )
+
+
+    if abs(b_c) > 1e-12:
+
+        ys_casamento = -(a_c * xs + c_c) / b_c
+
+        plt.plot(
+            xs,
+            ys_casamento,
+            linewidth=2,
+            label=f"Reta — Método da menor distancia\n{equacao_reta(a_c, b_c, c_c)}"
+        )
+
+    else:
+
+        x_vertical = -c_c / a_c
+
+        plt.axvline(
+            x_vertical,
+            linewidth=2,
+            label=f"Reta — Método da menor distancia\n{equacao_reta(a_c, b_c, c_c)}"
+        )
+
+    if abs(w[1]) > 1e-12:
+
+        ys_perceptron = -(w[0] * xs + w[2]) / w[1]
+
+        estilo = "-" if convergiu else "--"
+
+        plt.plot(
+            xs,
+            ys_perceptron,
+            linestyle=estilo,
+            linewidth=2,
+            label=f"Reta — Perceptron\n{equacao_reta(w[0], w[1], w[2])}"
+        )
+
+    else:
+
+        x_vertical = -w[2] / w[0]
+
+        estilo = "-" if convergiu else "--"
+
+        plt.axvline(
+            x_vertical,
+            linestyle=estilo,
+            linewidth=2,
+            label=f"Reta — Perceptron\n{equacao_reta(w[0], w[1], w[2])}"
+        )
+
+
+    plt.scatter(
+        mi[0],
+        mi[1],
+        marker="X",
+        s=180,
+        label=f"Protótipo {nomes_classes[classe_a]}"
+    )
+
+    plt.scatter(
+        mj[0],
+        mj[1],
+        marker="X",
+        s=180,
+        label=f"Protótipo {nomes_classes[classe_b]}"
+    )
+
+
+    plt.ylim(Xte[:, 1].min() - 0.3, Xte[:, 1].max() + 0.3)
+    plt.xlabel("Sepal length")
+    plt.ylabel("Sepal width")
+
+    plt.title(
+        f"{nomes_classes[classe_a]} × "
+        f"{nomes_classes[classe_b]}"
+    )
+
+    # Legenda fora da área do gráfico para não cobrir os pontos
+    plt.legend(loc="upper left", bbox_to_anchor=(1.02, 1))
+    plt.grid(True, alpha=0.25)
+
+    salvar_figura(nome_arquivo)
+
+
+    print("==========================================")
+    print(
+        f"{nomes_classes[classe_a]} × "
+        f"{nomes_classes[classe_b]}"
+    )
+    print("==========================================")
+
+    print("\nMétodo do casamento:")
+    print(
+        "Equação:",
+        equacao_reta_texto(a_c, b_c, c_c)
+    )
+
+    print("\nPerceptron:")
+    print("Pesos:", w)
+    print("Épocas:", epocas)
+    print("Convergiu:", convergiu)
+
+comparar_graficamente(
+    0,
+    1,
+    X2_treino_pr4,
+    y_treino,
+    X2_teste_pr4,
+    y_teste,
+    prototipos,
+    "comp_sver"
+)
+
+comparar_graficamente(
+    0,
+    2,
+    X2_treino_pr4,
+    y_treino,
+    X2_teste_pr4,
+    y_teste,
+    prototipos,
+    "comp_sv"
+)
+
+comparar_graficamente(
+    2,
+    1,
+    X2_treino_pr4,
+    y_treino,
+    X2_teste_pr4,
+    y_teste,
+    prototipos,
+    "comp_vver"
+)
+
+print(f"\nFiguras salvas em: {PASTA_FIGURAS}")
+
+# Exibe todas as figuras geradas
+plt.show()
