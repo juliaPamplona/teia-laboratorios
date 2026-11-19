@@ -1,0 +1,59 @@
+R: R version 4.6.2 (2026-10-29 ucrt) 
+MVN: 6.3 
+
+==============================================================
+Classe: setosa (n = 50 )
+==============================================================
+
+--- Teste de Henze-Zirkler ---
+           Test Statistic p.value     Method          MVN
+1 Henze-Zirkler     0.949    0.05 asymptotic ✗ Not normal
+
+--- Teste de Mardia (assimetria e curtose) ---
+             Test Statistic p.value     Method      MVN
+1 Mardia Skewness    25.664   0.177 asymptotic ✓ Normal
+2 Mardia Kurtosis     1.295   0.195 asymptotic ✓ Normal
+
+--- p-valores sem arredondamento ---
+           Teste Estatistica     p.valor
+   Henze-Zirkler  0.94884532 0.049953556
+ Mardia Skewness 25.66434452 0.177185884
+ Mardia Kurtosis  1.29499224 0.195322907
+
+==============================================================
+Classe: versicolor (n = 50 )
+==============================================================
+
+--- Teste de Henze-Zirkler ---
+           Test Statistic p.value     Method      MVN
+1 Henze-Zirkler     0.839   0.226 asymptotic ✓ Normal
+
+--- Teste de Mardia (assimetria e curtose) ---
+             Test Statistic p.value     Method      MVN
+1 Mardia Skewness    25.185   0.194 asymptotic ✓ Normal
+2 Mardia Kurtosis    -0.572   0.567 asymptotic ✓ Normal
+
+--- p-valores sem arredondamento ---
+           Teste Estatistica    p.valor
+   Henze-Zirkler  0.83880089 0.22619915
+ Mardia Skewness 25.18501154 0.19444448
+ Mardia Kurtosis -0.57186636 0.56741252
+
+==============================================================
+Classe: virginica (n = 50 )
+==============================================================
+
+--- Teste de Henze-Zirkler ---
+           Test Statistic p.value     Method      MVN
+1 Henze-Zirkler     0.757   0.497 asymptotic ✓ Normal
+
+--- Teste de Mardia (assimetria e curtose) ---
+             Test Statistic p.value     Method      MVN
+1 Mardia Skewness    26.271   0.157 asymptotic ✓ Normal
+2 Mardia Kurtosis     0.153   0.879 asymptotic ✓ Normal
+
+--- p-valores sem arredondamento ---
+           Teste Estatistica    p.valor
+   Henze-Zirkler  0.75700952 0.49702369
+ Mardia Skewness 26.27059818 0.15705971
+ Mardia Kurtosis  0.15261417 0.87870255
