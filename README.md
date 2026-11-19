@@ -8,3 +8,4 @@ Prof. Robson Pequeno de Sousa
 |---|---|
 | [Lab 01](lab01/) | Classificador de distância mínima e funções de decisão aplicados à base Iris |
 | [Lab 02](lab2/) | Função discriminante linear e algoritmo perceptron aplicados à base Iris e às tabelas verdade |
+| [Lab 03](lab3/) | Perceptron com regra delta (PR41) e métricas de qualidade — acerto global, acurácias do produtor e do usuário, Kappa, Tau, MCC, F_b e testes de significância (PR51) |
